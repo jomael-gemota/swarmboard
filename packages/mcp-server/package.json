@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "@swarmboard/shared": "^0.0.1",
+    "@swarmboard/shared": "workspace:*",
     "zod": "^3.25.76"
   },
   "devDependencies": {
