@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import { requireAuth, type AuthenticatedRequest } from "../middleware/requireAuth.js";
 import { emitToBoard } from "../lib/socket.js";
 import { checkConflicts } from "../services/conflictDetection.js";
+import { fetchAuthUsers, serializeUser } from "../lib/users.js";
 import { z } from "zod";
 
 const router = Router({ mergeParams: true });
@@ -66,11 +67,12 @@ router.get("/", requireAuth, async (req, res) => {
   }
 
   const tasks = await Task.find({ boardId })
-    .populate("ownerId", "name email image")
     .sort({ position: 1, createdAt: 1 })
     .lean();
 
-  res.json(tasks.map((t) => taskToJson(t, t.ownerId)));
+  const userMap = await fetchAuthUsers(tasks.map((t) => t.ownerId));
+
+  res.json(tasks.map((t) => taskToJson(t, serializeUser(t.ownerId, userMap))));
 });
 
 // POST /boards/:boardId/tasks
@@ -103,8 +105,9 @@ router.post("/", requireAuth, async (req, res) => {
     content: "Task created",
   });
 
-  const populated = await task.populate("ownerId", "name email image");
-  const json = taskToJson(populated.toObject(), populated.ownerId);
+  const obj = task.toObject();
+  const userMap = await fetchAuthUsers([obj.ownerId]);
+  const json = taskToJson(obj, serializeUser(obj.ownerId, userMap));
 
   emitToBoard(boardId, "task:created", json as never);
   res.status(201).json(json);
@@ -141,9 +144,7 @@ router.patch("/:taskId", requireAuth, async (req, res) => {
     taskId,
     { ...parsed.data, isStale: false },
     { new: true }
-  )
-    .populate("ownerId", "name email image")
-    .lean();
+  ).lean();
 
   if (!updated) {
     res.status(404).json({ error: "Task not found" });
@@ -163,7 +164,8 @@ router.patch("/:taskId", requireAuth, async (req, res) => {
     await checkConflicts(boardId, taskId, parsed.data.modulePath ?? null);
   }
 
-  const json = taskToJson(updated, updated.ownerId);
+  const userMap = await fetchAuthUsers([updated.ownerId]);
+  const json = taskToJson(updated, serializeUser(updated.ownerId, userMap));
   emitToBoard(boardId, "task:updated", json as never);
   res.json(json);
 });
@@ -206,11 +208,19 @@ router.get("/:taskId/activity", requireAuth, async (req, res) => {
   }
 
   const logs = await ActivityLog.find({ taskId })
-    .populate("userId", "name email")
     .sort({ createdAt: 1 })
     .lean();
 
-  res.json(logs.map((l) => ({ ...l, id: String(l._id), taskId: String(l.taskId) })));
+  const userMap = await fetchAuthUsers(logs.map((l) => l.userId));
+
+  res.json(
+    logs.map((l) => ({
+      ...l,
+      id: String(l._id),
+      taskId: String(l.taskId),
+      user: serializeUser(l.userId, userMap),
+    }))
+  );
 });
 
 export default router;

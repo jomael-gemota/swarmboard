@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { Task, Board, Member, ActivityLog } from "../models/index.js";
 import { requireAuth, type AuthenticatedRequest } from "../middleware/requireAuth.js";
+import { fetchAuthUsers, serializeUser } from "../lib/users.js";
 import type { Types } from "mongoose";
 
 const router = Router({ mergeParams: true });
@@ -29,7 +30,6 @@ router.get("/", requireAuth, async (req, res) => {
 
       // Stale tasks
       Task.find({ boardId: { $in: boardIds }, isStale: true })
-        .populate("ownerId", "name email")
         .populate("boardId", "name")
         .sort({ updatedAt: 1 })
         .limit(20)
@@ -37,7 +37,6 @@ router.get("/", requireAuth, async (req, res) => {
 
       // Conflict tasks
       Task.find({ boardId: { $in: boardIds }, hasConflict: true })
-        .populate("ownerId", "name email")
         .populate("boardId", "name")
         .limit(20)
         .lean(),
@@ -49,7 +48,6 @@ router.get("/", requireAuth, async (req, res) => {
           match: { boardId: { $in: boardIds } },
           select: "title boardId",
         })
-        .populate("userId", "name")
         .sort({ createdAt: -1 })
         .limit(50)
         .lean(),
@@ -95,6 +93,13 @@ router.get("/", requireAuth, async (req, res) => {
     }
   }
 
+  // Look up all referenced auth users in one round-trip
+  const userMap = await fetchAuthUsers([
+    ...staleTasks.map((t) => t.ownerId),
+    ...conflictTasks.map((t) => t.ownerId),
+    ...recentActivity.map((l) => l.userId),
+  ]);
+
   // Filter recentActivity to only include logs whose task belongs to a board in this org
   const filteredActivity = recentActivity
     .filter((l) => l.taskId != null)
@@ -102,12 +107,21 @@ router.get("/", requireAuth, async (req, res) => {
       ...l,
       id: String(l._id),
       taskId: String(l.taskId),
+      user: serializeUser(l.userId, userMap),
     }));
 
   res.json({
     tasksByStatus: tasksByStatus.map((r) => ({ status: r._id, _count: r.count })),
-    staleTasks: staleTasks.map((t) => ({ ...t, id: String(t._id) })),
-    conflictTasks: conflictTasks.map((t) => ({ ...t, id: String(t._id) })),
+    staleTasks: staleTasks.map((t) => ({
+      ...t,
+      id: String(t._id),
+      owner: serializeUser(t.ownerId, userMap),
+    })),
+    conflictTasks: conflictTasks.map((t) => ({
+      ...t,
+      id: String(t._id),
+      owner: serializeUser(t.ownerId, userMap),
+    })),
     recentActivity: filteredActivity,
     memberThroughput,
     moduleHeatmap,

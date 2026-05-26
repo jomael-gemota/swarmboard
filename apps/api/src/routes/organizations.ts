@@ -2,37 +2,10 @@ import { Router } from "express";
 import { Organization, Member } from "../models/index.js";
 import { requireAuth, type AuthenticatedRequest } from "../middleware/requireAuth.js";
 import { serialize } from "../lib/serialize.js";
-import { getAuthDb } from "../lib/db.js";
-import { ObjectId } from "mongodb";
+import { fetchAuthUsers, serializeUser } from "../lib/users.js";
 import { z } from "zod";
 
 const router = Router();
-
-type AuthUserDoc = {
-  _id: unknown;
-  name?: string;
-  email?: string;
-  image?: string;
-};
-
-async function fetchAuthUsers(userIds: unknown[]): Promise<Map<string, AuthUserDoc>> {
-  const stringIds = userIds.map((id) => String(id));
-  if (stringIds.length === 0) return new Map();
-
-  const objectIds: ObjectId[] = [];
-  for (const id of stringIds) {
-    if (ObjectId.isValid(id)) objectIds.push(new ObjectId(id));
-  }
-
-  const users = await getAuthDb()
-    .collection<AuthUserDoc>("user")
-    .find({ $or: [{ _id: { $in: objectIds } }, { _id: { $in: stringIds } }] })
-    .toArray();
-
-  const map = new Map<string, AuthUserDoc>();
-  for (const u of users) map.set(String(u._id), u);
-  return map;
-}
 
 const CreateOrgSchema = z.object({
   name: z.string().min(1).max(100),
@@ -110,16 +83,11 @@ router.get("/:orgId", requireAuth, async (req, res) => {
   res.json({
     ...org,
     id: String(org._id),
-    members: members.map((m) => {
-      const u = userMap.get(String(m.userId));
-      return {
-        id: String(m._id),
-        role: m.role,
-        user: u
-          ? { id: String(u._id), name: u.name, email: u.email, image: u.image }
-          : { id: String(m.userId), name: null, email: null },
-      };
-    }),
+    members: members.map((m) => ({
+      id: String(m._id),
+      role: m.role,
+      user: serializeUser(m.userId, userMap),
+    })),
   });
 });
 
@@ -203,14 +171,11 @@ router.patch("/:orgId/members/:memberId", requireAuth, async (req, res) => {
   }
 
   const userMap = await fetchAuthUsers([updated.userId]);
-  const u = userMap.get(String(updated.userId));
 
   res.json({
     id: String(updated._id),
     role: updated.role,
-    user: u
-      ? { id: String(u._id), name: u.name, email: u.email, image: u.image }
-      : { id: String(updated.userId), name: null, email: null },
+    user: serializeUser(updated.userId, userMap),
   });
 });
 

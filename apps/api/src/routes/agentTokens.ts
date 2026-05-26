@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { AgentToken, Member } from "../models/index.js";
 import { requireAuth, type AuthenticatedRequest } from "../middleware/requireAuth.js";
+import { fetchAuthUsers, serializeUser } from "../lib/users.js";
 import { randomBytes, createHash } from "crypto";
 import { z } from "zod";
 
@@ -27,15 +28,17 @@ router.get("/", requireAuth, async (req, res) => {
       : { organizationId: orgId };
 
   const tokens = await AgentToken.find(query)
-    .populate("userId", "name email")
     .sort({ createdAt: -1 })
     .lean();
+
+  const userMap = await fetchAuthUsers(tokens.map((t) => t.userId));
 
   res.json(
     tokens.map(({ tokenHash: _h, ...t }) => ({
       ...t,
       id: String(t._id),
       userId: String(t.userId),
+      user: serializeUser(t.userId, userMap),
     }))
   );
 });
