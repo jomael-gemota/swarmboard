@@ -52,10 +52,10 @@ export default function AgentTokensPage() {
   }
 
   return (
-    <div className="p-6 max-w-3xl">
+    <div className="page-shell page-content">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold">Agent Tokens</h1>
+          <h1 className="text-2xl font-semibold">Agent Tokens</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Generate tokens so your AI agents can report into swarmboard
           </p>
@@ -68,7 +68,7 @@ export default function AgentTokensPage() {
 
       {/* Revealed token alert */}
       {revealedToken && (
-        <div className="mb-6 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+        <div className="mb-6 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 shadow-sm">
           <p className="text-sm font-medium text-emerald-400 mb-2">
             Token created — copy it now, it won't be shown again
           </p>
@@ -112,7 +112,7 @@ export default function AgentTokensPage() {
           {tokens.map((token) => (
             <div
               key={token.id}
-              className="flex items-center gap-3 bg-card border rounded-xl px-4 py-3"
+              className="flex items-center gap-3 bg-card border rounded-xl px-4 py-3 shadow-sm"
             >
               <Key className="w-4 h-4 text-muted-foreground flex-shrink-0" />
               <div className="flex-1 min-w-0">
@@ -146,7 +146,7 @@ export default function AgentTokensPage() {
       )}
 
       {/* Usage instructions */}
-      <div className="mt-8 bg-card border rounded-xl p-5">
+      <div className="mt-8 bg-card border rounded-xl p-5 shadow-sm">
         <h3 className="text-sm font-semibold mb-3">Using your token</h3>
         <div className="space-y-4 text-sm">
           <div>

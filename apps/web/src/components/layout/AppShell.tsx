@@ -88,10 +88,10 @@ export default function AppShell({ children }: AppShellProps) {
       <Link
         to={href}
         className={cn(
-          "flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors",
+          "flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors",
           active
-            ? "bg-primary/15 text-primary font-medium"
-            : "text-muted-foreground hover:text-foreground hover:bg-accent"
+            ? "bg-primary/15 text-primary font-medium shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.24)]"
+            : "text-muted-foreground hover:text-foreground hover:bg-accent/80"
         )}
       >
         {icon}
@@ -101,23 +101,23 @@ export default function AppShell({ children }: AppShellProps) {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar */}
-      <aside className="w-60 flex-shrink-0 border-r bg-card flex flex-col">
+      <aside className="w-72 xl:w-80 flex-shrink-0 border-r border-border/80 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85 flex flex-col">
         {/* Logo + Org switcher */}
-        <div className="p-4 border-b">
-          <Link to="/" className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 bg-primary rounded-md flex items-center justify-center">
+        <div className="px-5 py-5 border-b">
+          <Link to="/" className="flex items-center gap-2.5 mb-4">
+            <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center shadow-sm">
               <Bug className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-bold text-sm tracking-tight">swarmboard</span>
+            <span className="font-bold text-sm tracking-tight uppercase text-foreground/95">swarmboard</span>
           </Link>
 
           {/* Org switcher */}
           <div className="relative">
             <button
               onClick={() => setOrgMenuOpen((o) => !o)}
-              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-sm bg-secondary hover:bg-accent transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm bg-secondary hover:bg-accent transition-colors"
             >
               <span className="truncate font-medium">
                 {currentOrg?.name ?? "Select workspace"}
@@ -159,7 +159,7 @@ export default function AppShell({ children }: AppShellProps) {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1.5">
           {orgId && (
             <>
               {navItem(`/orgs/${orgId}`, <LayoutDashboard className="w-4 h-4" />, "Dashboard", { exact: true })}
@@ -180,8 +180,8 @@ export default function AppShell({ children }: AppShellProps) {
               )}
 
               {/* Boards */}
-              <div className="pt-3 pb-1">
-                <div className="flex items-center justify-between px-3 mb-1">
+              <div className="pt-4 pb-1">
+                <div className="flex items-center justify-between px-3 mb-1.5">
                   <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                     Boards
                   </span>
@@ -217,9 +217,9 @@ export default function AppShell({ children }: AppShellProps) {
         </nav>
 
         {/* User */}
-        <div className="p-3 border-t">
-          <div className="flex items-center gap-2.5 px-2 py-1.5">
-            <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
+        <div className="px-4 py-3.5 border-t">
+          <div className="flex items-center gap-3 px-2.5 py-2 rounded-lg bg-secondary/40">
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
               {session?.user?.name?.[0]?.toUpperCase() ?? "?"}
             </div>
             <div className="flex-1 min-w-0">
@@ -238,7 +238,7 @@ export default function AppShell({ children }: AppShellProps) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="flex-1 min-w-0 overflow-y-auto bg-background/60">{children}</main>
 
       {/* Create board dialog */}
       <Dialog open={showCreateBoard} onOpenChange={setShowCreateBoard}>

@@ -135,9 +135,9 @@ export default function BoardSettingsPage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl space-y-8">
+    <div className="page-shell w-full max-w-5xl mx-auto space-y-7">
       <div>
-        <h1 className="text-xl font-semibold">Board settings</h1>
+        <h1 className="text-2xl font-semibold">Board settings</h1>
         <p className="text-sm text-muted-foreground mt-0.5">{board?.name}</p>
       </div>
 
@@ -146,7 +146,7 @@ export default function BoardSettingsPage() {
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           General
         </h2>
-        <div className="bg-card border rounded-xl p-5 space-y-4">
+        <div className="bg-card border rounded-xl p-5 space-y-4 shadow-sm">
           <div className="space-y-1.5">
             <Label htmlFor="board-name">Board name</Label>
             <Input
@@ -203,7 +203,7 @@ export default function BoardSettingsPage() {
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           Git webhook integration
         </h2>
-        <div className="bg-card border rounded-xl p-5 space-y-5">
+        <div className="bg-card border rounded-xl p-5 space-y-5 shadow-sm">
           <p className="text-sm text-muted-foreground">
             Add the webhook URL and secret to your GitHub or GitLab repository to automatically
             update tasks from commits, pull requests, and CI events.
@@ -256,7 +256,7 @@ export default function BoardSettingsPage() {
         </h2>
         <div
           className={cn(
-            "bg-card border rounded-xl p-5 space-y-3",
+            "bg-card border rounded-xl p-5 space-y-3 shadow-sm",
             confirmDelete && "border-destructive/50"
           )}
         >

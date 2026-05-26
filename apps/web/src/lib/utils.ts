@@ -39,11 +39,11 @@ export const STATUS_LABELS: Record<TaskStatus, string> = {
 };
 
 export const STATUS_COLORS: Record<TaskStatus, string> = {
-  backlog: "bg-gray-500/20 text-gray-400 border-gray-500/30",
-  in_progress: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  in_review: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-  verified: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  deployed: "bg-violet-500/20 text-violet-400 border-violet-500/30",
+  backlog: "bg-[#8b949e]/20 text-[#c2cad1] border-[#8b949e]/35",
+  in_progress: "bg-[#5b5fd9]/22 text-[#c8c9f5] border-[#7b7fe8]/40",
+  in_review: "bg-[#3078e8]/18 text-[#8fb8ff] border-[#3078e8]/40",
+  verified: "bg-[#38b850]/16 text-[#88dda0] border-[#38b850]/38",
+  deployed: "bg-[#a878e0]/18 text-[#d4b6f5] border-[#a878e0]/40",
 };
 
 export const AGENT_LABELS: Record<string, string> = {
@@ -55,11 +55,11 @@ export const AGENT_LABELS: Record<string, string> = {
 };
 
 export const SOURCE_COLORS: Record<string, string> = {
-  agent: "text-blue-400",
-  git: "text-emerald-400",
-  ci: "text-amber-400",
-  system: "text-gray-400",
-  user: "text-violet-400",
+  agent: "text-[#7b7fe8]",
+  git: "text-[#38b850]",
+  ci: "text-[#a87818]",
+  system: "text-[#8b949e]",
+  user: "text-[#a878e0]",
 };
 
 export const SOURCE_ICONS: Record<string, string> = {

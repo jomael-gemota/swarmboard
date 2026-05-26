@@ -31,15 +31,15 @@ export default function NewOrgPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
+      <div className="w-full max-w-md">
+        <div className="flex items-center justify-center gap-2.5 mb-8">
+          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-sm">
             <Bug className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold tracking-tight">swarmboard</span>
+          <span className="text-xl font-bold tracking-tight uppercase">swarmboard</span>
         </div>
 
-        <div className="bg-card border rounded-xl p-6 shadow-lg">
+        <div className="bg-card border rounded-xl p-7 shadow-xl">
           <button
             onClick={() => navigate("/")}
             className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"

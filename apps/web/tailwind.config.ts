@@ -5,6 +5,17 @@ export default {
   darkMode: ["class"],
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
+    fontFamily: {
+      sans: [
+        "Segoe UI",
+        "Segoe UI Variable",
+        "Inter",
+        "Roboto",
+        "Helvetica Neue",
+        "Arial",
+        "sans-serif",
+      ],
+    },
     extend: {
       colors: {
         border: "hsl(var(--border))",

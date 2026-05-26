@@ -33,9 +33,9 @@ export default function DashboardPage() {
 
   if (isLoading || !data) {
     return (
-      <div className="p-6 space-y-6 animate-pulse">
-        <div className="h-6 bg-secondary rounded w-40" />
-        <div className="grid grid-cols-5 gap-3">
+      <div className="page-shell page-content space-y-6 animate-pulse">
+        <div className="h-6 bg-secondary rounded w-44" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-24 bg-secondary rounded-xl" />
           ))}
@@ -52,18 +52,18 @@ export default function DashboardPage() {
     (statusMap["in_progress"] ?? 0) + (statusMap["in_review"] ?? 0);
 
   return (
-    <div className="p-6 space-y-8 max-w-6xl">
+    <div className="page-shell page-content space-y-7">
       <div>
-        <h1 className="text-xl font-semibold">Dashboard</h1>
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           Real-time overview of your AI agent swarm
         </p>
       </div>
 
       {/* Status summary cards */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
         {STATUS_ORDER.map((status) => (
-          <div key={status} className="bg-card border rounded-xl p-4">
+          <div key={status} className="bg-card border rounded-xl p-4 shadow-sm">
             <span
               className={cn(
                 "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold mb-2",
@@ -79,10 +79,10 @@ export default function DashboardPage() {
 
       {/* Alerts row */}
       {(data.staleTasks.length > 0 || data.conflictTasks.length > 0) && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {/* Stale tasks */}
           {data.staleTasks.length > 0 && (
-            <div className="bg-card border border-amber-500/30 rounded-xl p-4">
+            <div className="bg-card border border-amber-500/30 rounded-xl p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
                 <Clock className="w-4 h-4 text-amber-400" />
                 <h2 className="text-sm font-semibold text-amber-400">
@@ -106,7 +106,7 @@ export default function DashboardPage() {
 
           {/* Conflict tasks */}
           {data.conflictTasks.length > 0 && (
-            <div className="bg-card border border-red-500/30 rounded-xl p-4">
+            <div className="bg-card border border-red-500/30 rounded-xl p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
                 <AlertTriangle className="w-4 h-4 text-red-400" />
                 <h2 className="text-sm font-semibold text-red-400">
@@ -130,7 +130,7 @@ export default function DashboardPage() {
 
       {/* Module heatmap */}
       {Object.keys(data.moduleHeatmap).length > 0 && (
-        <div className="bg-card border rounded-xl p-5">
+        <div className="bg-card border rounded-xl p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <Layers className="w-4 h-4 text-muted-foreground" />
             <h2 className="text-sm font-semibold">Active modules</h2>
@@ -156,7 +156,7 @@ export default function DashboardPage() {
       )}
 
       {/* Recent activity feed */}
-      <div className="bg-card border rounded-xl p-5">
+      <div className="bg-card border rounded-xl p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <Activity className="w-4 h-4 text-muted-foreground" />
           <h2 className="text-sm font-semibold">Recent activity</h2>

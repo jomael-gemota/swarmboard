@@ -52,9 +52,9 @@ export default function WorkspaceSettingsPage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl space-y-8">
+    <div className="page-shell w-full max-w-5xl mx-auto space-y-7">
       <div>
-        <h1 className="text-xl font-semibold">Workspace settings</h1>
+        <h1 className="text-2xl font-semibold">Workspace settings</h1>
         <p className="text-sm text-muted-foreground mt-0.5">{org?.name}</p>
       </div>
 
@@ -63,7 +63,7 @@ export default function WorkspaceSettingsPage() {
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           General
         </h2>
-        <div className="bg-card border rounded-xl p-5 space-y-4">
+        <div className="bg-card border rounded-xl p-5 space-y-4 shadow-sm">
           <div className="space-y-1.5">
             <Label>Workspace name</Label>
             <Input value={org?.name ?? ""} readOnly className="bg-secondary/50 cursor-default" />
@@ -83,7 +83,7 @@ export default function WorkspaceSettingsPage() {
           </h2>
           <div
             className={cn(
-              "bg-card border rounded-xl p-5 space-y-3",
+              "bg-card border rounded-xl p-5 space-y-3 shadow-sm",
               confirmDelete && "border-destructive/50"
             )}
           >

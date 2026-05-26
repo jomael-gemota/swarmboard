@@ -4,24 +4,36 @@
 
 @layer base {
   :root {
-    --background: 160 10% 8%;
-    --foreground: 150 20% 96%;
-    --card: 160 10% 10%;
-    --card-foreground: 150 20% 96%;
-    --border: 160 8% 16%;
-    --input: 160 8% 16%;
-    --primary: 152 76% 45%;
-    --primary-foreground: 160 10% 8%;
-    --secondary: 160 8% 13%;
-    --secondary-foreground: 150 20% 96%;
-    --muted: 160 8% 13%;
-    --muted-foreground: 160 5% 48%;
-    --accent: 160 8% 13%;
-    --accent-foreground: 150 20% 96%;
-    --destructive: 0 63% 35%;
-    --destructive-foreground: 150 20% 96%;
-    --ring: 152 76% 45%;
-    --radius: 0.5rem;
+    --color-1: #0d1117;
+    --color-2: #161b22;
+    --color-3: #21262d;
+    --color-4: #8b949e;
+    --color-5: #e6edf3;
+    --color-6: #5b5fd9;
+    --color-7: #7b7fe8;
+    --color-8: #3a3db8;
+    --color-9: #1a1c4e;
+    --color-10: #c8c9f5;
+    --color-11: #c84038;
+
+    --background: 216 28% 7%;
+    --foreground: 208 35% 93%;
+    --card: 215 21% 11%;
+    --card-foreground: 208 35% 93%;
+    --border: 215 15% 15%;
+    --input: 215 15% 15%;
+    --primary: 238 62% 60%;
+    --primary-foreground: 208 35% 93%;
+    --secondary: 215 15% 15%;
+    --secondary-foreground: 208 35% 93%;
+    --muted: 215 21% 11%;
+    --muted-foreground: 212 9% 58%;
+    --accent: 239 52% 47%;
+    --accent-foreground: 208 35% 93%;
+    --destructive: 3 57% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --ring: 238 70% 70%;
+    --radius: 0.6rem;
   }
 }
 
@@ -29,8 +41,26 @@
   * {
     @apply border-border;
   }
+  html,
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    font-family: "Segoe UI", "Segoe UI Variable", "Inter", "Roboto", "Helvetica Neue", Arial, sans-serif;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at 12% 10%, hsl(var(--primary) / 0.12), transparent 38%),
+      radial-gradient(circle at 88% 92%, hsl(var(--accent) / 0.08), transparent 34%);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .page-shell {
+    @apply w-full p-5 md:p-6 xl:px-8 2xl:px-10;
+  }
+
+  .page-content {
+    @apply w-full max-w-[1600px] mx-auto;
   }
 }
 

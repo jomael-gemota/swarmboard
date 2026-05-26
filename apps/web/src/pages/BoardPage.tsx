@@ -126,11 +126,11 @@ export default function BoardPage() {
   );
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-w-0">
       {/* Board header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0">
+      <div className="flex items-center justify-between px-5 md:px-6 xl:px-8 py-4 border-b flex-shrink-0 bg-card/60">
         <div>
-          <h1 className="text-lg font-semibold">{board?.name ?? "Board"}</h1>
+          <h1 className="text-xl font-semibold">{board?.name ?? "Board"}</h1>
           {board?.repoUrl && (
             <a
               href={board.repoUrl}
@@ -185,7 +185,7 @@ export default function BoardPage() {
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex gap-4 p-6 h-full">
+          <div className="flex gap-4 p-5 md:p-6 xl:p-8 h-full">
             {STATUSES.map((status) => (
               <KanbanColumn
                 key={status}

@@ -32,20 +32,20 @@ export default function CreateWorkspacePage() {
   const canSubmit = name.trim() && slug.trim() && !createMutation.isPending;
 
   return (
-    <div className="p-6 max-w-lg">
+    <div className="page-shell w-full max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center">
           <Building2 className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-xl font-semibold">New workspace</h1>
+          <h1 className="text-2xl font-semibold">New workspace</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             A workspace holds your team's boards, members, and agent tokens
           </p>
         </div>
       </div>
 
-      <div className="bg-card border rounded-xl p-6">
+      <div className="bg-card border rounded-xl p-6 md:p-7 shadow-sm">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -53,38 +53,40 @@ export default function CreateWorkspacePage() {
           }}
           className="space-y-5"
         >
-          <div className="space-y-1.5">
-            <Label htmlFor="ws-name">Workspace name</Label>
-            <Input
-              id="ws-name"
-              placeholder="Acme Engineering"
-              value={name}
-              onChange={(e) => handleNameChange(e.target.value)}
-              required
-              autoFocus
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="ws-slug">Slug</Label>
-            <div className="flex items-center gap-2">
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="ws-name">Workspace name</Label>
               <Input
-                id="ws-slug"
-                placeholder="acme-engineering"
-                value={slug}
-                onChange={(e) => {
-                  setSlug(e.target.value);
-                  setSlugTouched(true);
-                }}
-                pattern="^[a-z0-9\-]+$"
-                title="Lowercase letters, numbers, and hyphens only"
+                id="ws-name"
+                placeholder="Acme Engineering"
+                value={name}
+                onChange={(e) => handleNameChange(e.target.value)}
                 required
-                className="font-mono"
+                autoFocus
               />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Lowercase letters, numbers, and hyphens only
-            </p>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="ws-slug">Slug</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="ws-slug"
+                  placeholder="acme-engineering"
+                  value={slug}
+                  onChange={(e) => {
+                    setSlug(e.target.value);
+                    setSlugTouched(true);
+                  }}
+                  pattern="^[a-z0-9\-]+$"
+                  title="Lowercase letters, numbers, and hyphens only"
+                  required
+                  className="font-mono"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Lowercase letters, numbers, and hyphens only
+              </p>
+            </div>
           </div>
 
           {createMutation.error && (

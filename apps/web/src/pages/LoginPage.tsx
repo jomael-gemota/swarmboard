@@ -38,16 +38,16 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
+        <div className="flex items-center justify-center gap-2.5 mb-8">
+          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-sm">
             <Bug className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold tracking-tight">swarmboard</span>
+          <span className="text-xl font-bold tracking-tight uppercase">swarmboard</span>
         </div>
 
-        <div className="bg-card border rounded-xl p-6 shadow-lg">
+        <div className="bg-card border rounded-xl p-7 shadow-xl">
           <h1 className="text-lg font-semibold mb-1">
             {mode === "login" ? "Welcome back" : "Create an account"}
           </h1>

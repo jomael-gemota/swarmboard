@@ -58,11 +58,11 @@ export default function MembersPage() {
   });
 
   return (
-    <div className="p-6 max-w-3xl space-y-8">
+    <div className="page-shell page-content space-y-7">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">Members</h1>
+          <h1 className="text-2xl font-semibold">Members</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Manage who has access to {org?.name}
           </p>
@@ -85,7 +85,7 @@ export default function MembersPage() {
           {org?.members?.map((member) => (
             <div
               key={member.id}
-              className="flex items-center gap-3 bg-card border rounded-xl px-4 py-3"
+              className="flex items-center gap-3 bg-card border rounded-xl px-4 py-3 shadow-sm"
             >
               <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
                 {member.user?.name?.[0]?.toUpperCase() ?? "?"}
