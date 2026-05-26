@@ -66,6 +66,19 @@ docker run -d --name swarmboard-redis -p 6379:6379 redis:alpine
 
 ---
 
+## Deploying to Railway
+
+Swarmboard is configured for two-service deployment on [Railway](https://railway.app):
+
+- `swarmboard-api` — Express + Socket.io + BullMQ workers, built from `Dockerfile.api`
+- `swarmboard-web` — Vite-built React SPA served by nginx, built from `Dockerfile.web`
+
+Bring your own **MongoDB** (Atlas works great) and add a **Redis** plugin in Railway.
+
+See the full step-by-step deployment guide: **[RAILWAY.md](./RAILWAY.md)**.
+
+---
+
 ## Features
 
 ### Phase 1 — Foundation ✅

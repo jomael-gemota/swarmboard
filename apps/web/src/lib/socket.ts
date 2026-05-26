@@ -5,7 +5,8 @@ let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
 
 export function getSocket(): Socket<ServerToClientEvents, ClientToServerEvents> {
   if (!socket) {
-    socket = io("/", { withCredentials: true });
+    const url = import.meta.env.VITE_API_URL?.replace(/\/$/, "") ?? "/";
+    socket = io(url, { withCredentials: true, transports: ["websocket", "polling"] });
   }
   return socket;
 }

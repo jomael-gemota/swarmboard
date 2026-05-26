@@ -1,4 +1,4 @@
-import { ObjectId } from "mongodb";
+import { ObjectId, type Filter } from "mongodb";
 import { getAuthDb } from "./db.js";
 
 export type AuthUserDoc = {
@@ -32,9 +32,16 @@ export async function fetchAuthUsers(
     if (ObjectId.isValid(id)) objectIds.push(new ObjectId(id));
   }
 
+  const filter = {
+    $or: [
+      { _id: { $in: objectIds } },
+      { _id: { $in: stringIds } },
+    ],
+  } as unknown as Filter<AuthUserDoc>;
+
   const users = await getAuthDb()
     .collection<AuthUserDoc>("user")
-    .find({ $or: [{ _id: { $in: objectIds } }, { _id: { $in: stringIds } }] })
+    .find(filter)
     .toArray();
 
   const map = new Map<string, AuthUserDoc>();

@@ -5,9 +5,14 @@ import type { Server as HttpServer } from "http";
 let io: Server<ClientToServerEvents, ServerToClientEvents>;
 
 export function createSocketServer(httpServer: HttpServer) {
+  const allowedOrigins = (process.env.FRONTEND_URL ?? "http://localhost:5173")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
   io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
     cors: {
-      origin: process.env.FRONTEND_URL ?? "http://localhost:5173",
+      origin: allowedOrigins,
       credentials: true,
     },
   });

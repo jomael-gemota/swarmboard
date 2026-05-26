@@ -34,11 +34,22 @@ async function bootstrap() {
   const app = express();
   const httpServer = createServer(app);
 
+  app.set("trust proxy", 1);
+
+  const allowedOrigins = (process.env.FRONTEND_URL ?? "http://localhost:5173")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
   // ─── Global Middleware ──────────────────────────────────────────────────────
   app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
   app.use(
     cors({
-      origin: process.env.FRONTEND_URL ?? "http://localhost:5173",
+      origin: (origin, cb) => {
+        if (!origin) return cb(null, true);
+        if (allowedOrigins.includes(origin)) return cb(null, true);
+        return cb(new Error(`Origin ${origin} not allowed by CORS`));
+      },
       credentials: true,
     })
   );
@@ -80,8 +91,9 @@ async function bootstrap() {
 
   // ─── Start ──────────────────────────────────────────────────────────────────
   const PORT = parseInt(process.env.PORT ?? "3001", 10);
-  httpServer.listen(PORT, () => {
-    console.log(`🐜 Swarmboard API running on http://localhost:${PORT}`);
+  const HOST = process.env.HOST ?? "0.0.0.0";
+  httpServer.listen(PORT, HOST, () => {
+    console.log(`Swarmboard API listening on ${HOST}:${PORT}`);
   });
 }
 
