@@ -36,19 +36,26 @@ async function bootstrap() {
 
   app.set("trust proxy", 1);
 
-  const allowedOrigins = (process.env.FRONTEND_URL ?? "http://localhost:5173")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const allowedOrigins = new Set(
+    (process.env.FRONTEND_URL ?? "http://localhost:5173")
+      .split(",")
+      .map((s) => s.trim().replace(/\/$/, ""))
+      .filter(Boolean)
+  );
 
   // ─── Global Middleware ──────────────────────────────────────────────────────
   app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
   app.use(
     cors({
+      // Return `false` (not an error) for disallowed origins so the request
+      // proceeds without CORS headers — the browser blocks it, but we don't
+      // spam logs with stack traces for every cross-origin probe.
       origin: (origin, cb) => {
         if (!origin) return cb(null, true);
-        if (allowedOrigins.includes(origin)) return cb(null, true);
-        return cb(new Error(`Origin ${origin} not allowed by CORS`));
+        const normalized = origin.replace(/\/$/, "");
+        if (allowedOrigins.has(normalized)) return cb(null, true);
+        console.warn(`[cors] blocked origin: ${origin}`);
+        return cb(null, false);
       },
       credentials: true,
     })
