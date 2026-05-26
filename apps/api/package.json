@@ -1,0 +1,36 @@
+{
+  "name": "@swarmboard/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@swarmboard/shared": "workspace:*",
+    "better-auth": "^1.2.0",
+    "bullmq": "^5.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.19.0",
+    "helmet": "^7.0.0",
+    "ioredis": "^5.0.0",
+    "mongoose": "^8.0.0",
+    "mongodb": "^6.0.0",
+    "morgan": "^1.10.0",
+    "openai": "^4.0.0",
+    "socket.io": "^4.7.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.0",
+    "@types/express": "^4.17.0",
+    "@types/morgan": "^1.9.0",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0"
+  }
+}

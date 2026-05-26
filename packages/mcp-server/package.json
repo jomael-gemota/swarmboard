@@ -1,0 +1,24 @@
+{
+  "name": "@swarmboard/mcp-server",
+  "version": "0.0.1",
+  "description": "MCP server for swarmboard — lets AI agents report task status natively",
+  "type": "module",
+  "bin": {
+    "swarmboard-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@swarmboard/shared": "workspace:*",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0"
+  }
+}
