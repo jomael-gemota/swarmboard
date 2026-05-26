@@ -20,18 +20,25 @@ RUN pnpm install --frozen-lockfile \
 COPY packages/shared ./packages/shared
 COPY apps/web ./apps/web
 
-# Build-time API URL injected via Railway build args / env
+# Build-time API URL (Vite bakes this into the bundle)
 ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
 
-RUN pnpm --filter @swarmboard/shared build && pnpm --filter @swarmboard/web build
+RUN pnpm --filter @swarmboard/shared build \
+ && pnpm --filter @swarmboard/web build
 
-# ── Stage 2: nginx static serve ───────────────────────────────────────────────
-FROM nginx:1.27-alpine AS runtime
+# ── Stage 2: runtime (Node + serve) ───────────────────────────────────────────
+FROM node:20-alpine AS runtime
 
-COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+RUN npm install -g serve@14.2.4
+
+COPY --from=builder /app/apps/web/dist ./dist
 
 EXPOSE 8080
 
-CMD ["nginx", "-g", "daemon off;"]
+# `serve` honors $PORT injected by Railway and binds on all interfaces
+CMD ["sh", "-c", "serve -s dist -l tcp://0.0.0.0:${PORT:-8080}"]
