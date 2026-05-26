@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { Organization, Member } from "../models/index.js";
+import { Organization, Member, Board, Task, ActivityLog, AgentToken } from "../models/index.js";
 import { requireAuth, type AuthenticatedRequest } from "../middleware/requireAuth.js";
 import { serialize } from "../lib/serialize.js";
 import { fetchAuthUsers, serializeUser } from "../lib/users.js";
@@ -177,6 +177,40 @@ router.patch("/:orgId/members/:memberId", requireAuth, async (req, res) => {
     role: updated.role,
     user: serializeUser(updated.userId, userMap),
   });
+});
+
+// DELETE /orgs/:orgId — delete workspace (owner only, cascades all data)
+router.delete("/:orgId", requireAuth, async (req, res) => {
+  const userId = (req as AuthenticatedRequest).userId;
+  const { orgId } = req.params;
+
+  const caller = await Member.findOne({ userId, organizationId: orgId });
+  if (!caller || caller.role !== "owner") {
+    res.status(403).json({ error: "Only the owner can delete a workspace" });
+    return;
+  }
+
+  const org = await Organization.findById(orgId);
+  if (!org) {
+    res.status(404).json({ error: "Workspace not found" });
+    return;
+  }
+
+  // Cascade: collect board IDs, then delete tasks + activity logs
+  const boards = await Board.find({ organizationId: orgId }).select("_id").lean();
+  const boardIds = boards.map((b) => b._id);
+
+  const tasks = await Task.find({ boardId: { $in: boardIds } }).select("_id").lean();
+  const taskIds = tasks.map((t) => t._id);
+
+  await ActivityLog.deleteMany({ taskId: { $in: taskIds } });
+  await Task.deleteMany({ boardId: { $in: boardIds } });
+  await Board.deleteMany({ organizationId: orgId });
+  await AgentToken.deleteMany({ organizationId: orgId });
+  await Member.deleteMany({ organizationId: orgId });
+  await Organization.findByIdAndDelete(orgId);
+
+  res.status(204).send();
 });
 
 // DELETE /orgs/:orgId/members/:memberId — remove member

@@ -58,8 +58,9 @@ export default function MembersPage() {
   });
 
   return (
-    <div className="p-6 max-w-3xl">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-6 max-w-3xl space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Members</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -72,6 +73,7 @@ export default function MembersPage() {
         </Button>
       </div>
 
+      {/* Member list */}
       {isLoading ? (
         <div className="space-y-2 animate-pulse">
           {[1, 2, 3].map((i) => (

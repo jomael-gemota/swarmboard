@@ -1,5 +1,6 @@
-import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { dashboardApi } from "@/lib/api";
 import { STATUS_LABELS, STATUS_COLORS, SOURCE_ICONS, formatRelative, cn } from "@/lib/utils";
 import { AlertTriangle, Clock, Activity, TrendingUp, Layers } from "lucide-react";
@@ -9,13 +10,26 @@ const STATUS_ORDER: TaskStatus[] = ["backlog", "in_progress", "in_review", "veri
 
 export default function DashboardPage() {
   const { orgId } = useParams<{ orgId: string }>();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["dashboard", orgId],
     queryFn: () => dashboardApi.get(orgId!),
     enabled: !!orgId,
     refetchInterval: 30_000,
+    retry: false,
   });
+
+  // If the org no longer exists (403/404), clear stale cache and go home
+  useEffect(() => {
+    if (error) {
+      queryClient.removeQueries({ queryKey: ["orgs"] });
+      queryClient.removeQueries({ queryKey: ["org", orgId] });
+      queryClient.removeQueries({ queryKey: ["boards", orgId] });
+      navigate("/", { replace: true });
+    }
+  }, [error, orgId, queryClient, navigate]);
 
   if (isLoading || !data) {
     return (

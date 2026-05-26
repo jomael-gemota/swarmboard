@@ -80,7 +80,7 @@ export default function NewOrgPage() {
                   setSlug(e.target.value);
                   setSlugTouched(true);
                 }}
-                pattern="^[a-z0-9-]+$"
+                pattern="^[a-z0-9\-]+$"
                 title="Lowercase letters, numbers, and hyphens only"
                 required
               />

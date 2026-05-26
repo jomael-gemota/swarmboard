@@ -1,13 +1,48 @@
 {
   "name": "@swarmboard/shared",
-  "version": "0.0.1",
-  "private": true,
+  "version": "1.1.0",
+  "description": "Shared TypeScript types and Zod schemas powering the swarmboard kanban platform — task models, organization/board entities, agent API payloads, and Socket.IO event contracts used by the swarmboard server, web client, and MCP server.",
   "type": "module",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "swarmboard",
+    "types",
+    "zod",
+    "schemas",
+    "shared",
+    "typescript",
+    "kanban",
+    "ai-agents",
+    "task-management",
+    "mcp"
+  ],
+  "author": "Jomael Gemota",
+  "license": "MIT",
+  "homepage": "https://github.com/jomael-gemota/swarmboard#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jomael-gemota/swarmboard.git",
+    "directory": "packages/shared"
+  },
+  "bugs": {
+    "url": "https://github.com/jomael-gemota/swarmboard/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
+    "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

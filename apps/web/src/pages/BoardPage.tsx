@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   DndContext,
@@ -16,7 +16,7 @@ import KanbanColumn from "@/components/kanban/KanbanColumn";
 import TaskDetailDrawer from "@/components/kanban/TaskDetailDrawer";
 import CreateTaskDialog from "@/components/kanban/CreateTaskDialog";
 import { STATUS_LABELS } from "@/lib/utils";
-import { Loader2, Wifi, WifiOff } from "lucide-react";
+import { Loader2, Wifi, WifiOff, Settings } from "lucide-react";
 
 const STATUSES: TaskStatus[] = ["backlog", "in_progress", "in_review", "verified", "deployed"];
 
@@ -166,6 +166,15 @@ export default function BoardPage() {
               </span>
             )}
           </div>
+
+          {/* Board settings */}
+          <Link
+            to={`/orgs/${orgId}/boards/${boardId}/settings`}
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            title="Board settings"
+          >
+            <Settings className="w-4 h-4" />
+          </Link>
         </div>
       </div>
 

@@ -33,6 +33,8 @@ export const orgsApi = {
     request<Organization>("/orgs", { method: "POST", body: JSON.stringify(data) }),
   get: (orgId: string) =>
     request<Organization & { members: (Member & { user: { name: string; email: string; image?: string } })[] }>(`/orgs/${orgId}`),
+  delete: (orgId: string) =>
+    request<void>(`/orgs/${orgId}`, { method: "DELETE" }),
   inviteMember: (orgId: string, data: { email: string; role: string }) =>
     request<Member>(`/orgs/${orgId}/members`, { method: "POST", body: JSON.stringify(data) }),
   updateMemberRole: (orgId: string, memberId: string, role: string) =>

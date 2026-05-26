@@ -58,7 +58,9 @@ export const BoardSchema = z.object({
   id: z.string(),
   name: z.string(),
   organizationId: z.string(),
-  repoUrl: z.string().nullable(),
+  repoUrl: z.string().nullable().optional(),
+  repoProvider: z.enum(["github", "gitlab"]).nullable().optional(),
+  webhookSecret: z.string().nullable().optional(),
   createdAt: z.string().datetime(),
 });
 export type Board = z.infer<typeof BoardSchema>;

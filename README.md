@@ -105,31 +105,41 @@ Agent tokens let AI agents (or any automated process) authenticate against the A
 
 ### Option A — MCP Server (recommended for Cursor, Claude Code, Windsurf)
 
-The MCP server must be built before it can be used:
-
-```bash
-pnpm --filter @swarmboard/mcp-server build
-```
-
-Then add the following to your MCP client config (e.g. `.cursor/mcp.json`):
+The MCP server is published to npm as `@swarmboard/mcp-server`. Add the following to your MCP client config (e.g. `.cursor/mcp.json`):
 
 ```json
 {
   "mcpServers": {
     "swarmboard": {
-      "command": "node",
-      "args": ["<absolute-path-to-repo>/packages/mcp-server/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "@swarmboard/mcp-server"],
       "env": {
         "SWARMBOARD_TOKEN": "swb_your_token_here",
-        "SWARMBOARD_URL": "http://localhost:3001"
+        "SWARMBOARD_URL": "https://your-swarmboard.com"
       }
     }
   }
 }
 ```
 
-> Replace `<absolute-path-to-repo>` with the full path to this repository on your machine.  
-> Change `SWARMBOARD_URL` if the API is deployed somewhere other than `localhost:3001`.
+> `npx -y` downloads and runs the package automatically — no local install or path needed.  
+> Set `SWARMBOARD_URL` to where your swarmboard API is deployed (or `http://localhost:3001` for local dev).
+
+**Running locally from source** (for contributors):
+
+```bash
+pnpm --filter @swarmboard/shared build
+pnpm --filter @swarmboard/mcp-server build
+```
+
+Then use `node` with the local path instead of `npx`:
+
+```json
+{
+  "command": "node",
+  "args": ["C:\\path\\to\\swarmboard\\packages\\mcp-server\\dist\\index.js"]
+}
+```
 
 Once connected, the following tools become available to the AI agent:
 
@@ -199,10 +209,36 @@ GET  /api/v1/tasks                — List your active tasks
 
 ## Git webhook integration
 
-In your board settings, copy the webhook URL and secret, then add it to GitHub or GitLab.
+> **Note:** A board settings UI is not yet built. You can retrieve the webhook secret via the API directly (see below).
 
-Reference task IDs in commit messages or PR titles using:
+### 1. Get your board's webhook URL and secret
+
+Open the board in swarmboard, then click the **⚙ gear icon** that appears next to the board name in the sidebar. The settings page shows:
+- Webhook URLs for GitHub and GitLab (pre-filled with your board ID)
+- The webhook secret (masked by default, click the eye icon to reveal)
+
+### 2. Register the webhook
+
+**GitHub:** Go to your repo → Settings → Webhooks → Add webhook
+- Payload URL: `http://your-swarmboard.com/webhooks/github/<boardId>`
+- Content type: `application/json`
+- Secret: paste your `webhookSecret`
+- Events: *Pull requests*, *Pushes*, *Check runs* (or *Statuses*)
+
+**GitLab:** Go to your repo → Settings → Webhooks
+- URL: `http://your-swarmboard.com/webhooks/gitlab/<boardId>`
+- Secret token: paste your `webhookSecret`
+- Triggers: *Push events*, *Merge request events*
+
+### 3. Reference tasks in commits and PRs
+
+Include a task ID anywhere in your commit message or PR title/body:
 - `[TASK-<id>]` — e.g. `[TASK-abc123] fix login redirect`
 - `#swb-<id>` — e.g. `#swb-abc123 implement OAuth`
 
-The board will auto-update task status when PRs are opened, merged, or CI passes/fails.
+The board will auto-update task status when:
+- A commit is pushed → activity log entry added
+- A PR is opened → task moves to `in_review`
+- A PR is merged → task moves to `verified`
+- CI passes → task marked `verified` (if agent already claimed complete)
+- CI fails → `ciStatus` updated to `failed`

@@ -22,6 +22,7 @@ import {
   ChevronDown,
   Plus,
   LogOut,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -144,7 +145,7 @@ export default function AppShell({ children }: AppShellProps) {
                 <div className="border-t">
                   <button
                     onClick={() => {
-                      navigate("/new-org");
+                      navigate("/workspaces/new");
                       setOrgMenuOpen(false);
                     }}
                     className="w-full text-left px-3 py-2 text-sm text-muted-foreground hover:bg-accent transition-colors flex items-center gap-2"
@@ -171,6 +172,11 @@ export default function AppShell({ children }: AppShellProps) {
                 `/orgs/${orgId}/agent-tokens`,
                 <Key className="w-4 h-4" />,
                 "Agent Tokens"
+              )}
+              {navItem(
+                `/orgs/${orgId}/settings`,
+                <Settings className="w-4 h-4" />,
+                "Settings"
               )}
 
               {/* Boards */}
@@ -201,9 +207,9 @@ export default function AppShell({ children }: AppShellProps) {
             </>
           )}
 
-          {orgs.length === 0 && (
+          {orgs.length === 0 && location.pathname !== "/workspaces/new" && (
             <div className="px-3 py-2 text-sm text-muted-foreground">
-              <Button size="sm" className="w-full" onClick={() => navigate("/new-org")}>
+              <Button size="sm" className="w-full" onClick={() => navigate("/workspaces/new")}>
                 <Plus className="w-3.5 h-3.5 mr-1" /> Create workspace
               </Button>
             </div>

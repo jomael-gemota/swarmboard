@@ -6,8 +6,11 @@ import LoginPage from "@/pages/LoginPage";
 import NewOrgPage from "@/pages/NewOrgPage";
 import DashboardPage from "@/pages/DashboardPage";
 import BoardPage from "@/pages/BoardPage";
+import BoardSettingsPage from "@/pages/BoardSettingsPage";
 import MembersPage from "@/pages/MembersPage";
 import AgentTokensPage from "@/pages/AgentTokensPage";
+import WorkspaceSettingsPage from "@/pages/WorkspaceSettingsPage";
+import CreateWorkspacePage from "@/pages/CreateWorkspacePage";
 import { orgsApi } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 
@@ -43,6 +46,16 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/new-org" element={<AuthGuard><NewOrgPage /></AuthGuard>} />
+      <Route
+        path="/workspaces/new"
+        element={
+          <AuthGuard>
+            <AppShell>
+              <CreateWorkspacePage />
+            </AppShell>
+          </AuthGuard>
+        }
+      />
 
       <Route
         path="/orgs/:orgId"
@@ -75,11 +88,31 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/orgs/:orgId/settings"
+        element={
+          <AuthGuard>
+            <AppShell>
+              <WorkspaceSettingsPage />
+            </AppShell>
+          </AuthGuard>
+        }
+      />
+      <Route
         path="/orgs/:orgId/boards/:boardId"
         element={
           <AuthGuard>
             <AppShell>
               <BoardPage />
+            </AppShell>
+          </AuthGuard>
+        }
+      />
+      <Route
+        path="/orgs/:orgId/boards/:boardId/settings"
+        element={
+          <AuthGuard>
+            <AppShell>
+              <BoardSettingsPage />
             </AppShell>
           </AuthGuard>
         }
@@ -117,7 +150,7 @@ function RootRedirect() {
     return <Navigate to={`/orgs/${orgs[0].id}`} replace />;
   }
 
-  return <Navigate to="/new-org" replace />;
+  return <Navigate to="/workspaces/new" replace />;
 }
 
 export default function App() {
