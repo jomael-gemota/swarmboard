@@ -62,6 +62,8 @@ export const boardsApi = {
     }),
   delete: (orgId: string, boardId: string) =>
     request<void>(`/orgs/${orgId}/boards/${boardId}`, { method: "DELETE" }),
+  getAgentsMd: (orgId: string, boardId: string) =>
+    request<{ markdown: string }>(`/orgs/${orgId}/boards/${boardId}/agents-md`),
 };
 
 // ─── Tasks ────────────────────────────────────────────────────────────────────

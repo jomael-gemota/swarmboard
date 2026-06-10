@@ -37,6 +37,7 @@ export const boardsApi = {
         body: JSON.stringify(data),
     }),
     delete: (orgId, boardId) => request(`/orgs/${orgId}/boards/${boardId}`, { method: "DELETE" }),
+    getAgentsMd: (orgId, boardId) => request(`/orgs/${orgId}/boards/${boardId}/agents-md`),
 };
 // ─── Tasks ────────────────────────────────────────────────────────────────────
 export const tasksApi = {

@@ -82,6 +82,12 @@ export default function BoardSettingsPage() {
     enabled: !!orgId && !!boardId,
   });
 
+  const { data: agentsMd } = useQuery({
+    queryKey: ["board-agents-md", orgId, boardId],
+    queryFn: () => boardsApi.getAgentsMd(orgId!, boardId!),
+    enabled: !!orgId && !!boardId,
+  });
+
   const [name, setName] = useState("");
   const [repoUrl, setRepoUrl] = useState("");
   const [repoProvider, setRepoProvider] = useState<"github" | "gitlab" | "none">("none");
@@ -246,6 +252,35 @@ export default function BoardSettingsPage() {
               #swb-&lt;id&gt;  e.g. #swb-abc123 implement OAuth
             </code>
           </div>
+        </div>
+      </section>
+
+      {/* Agent integration */}
+      <section className="space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Agent integration (AGENTS.md)
+        </h2>
+        <div className="bg-card border rounded-xl p-5 space-y-4 shadow-sm">
+          <p className="text-sm text-muted-foreground">
+            Commit this block into your repository's <code className="text-xs">AGENTS.md</code>{" "}
+            (or append it to an existing one — <code className="text-xs">CLAUDE.md</code> works for
+            Claude Code). It tells any AI agent to pull pending tasks from this board and log its
+            progress automatically. It contains the board ID only — no token — so it is safe to
+            commit.
+          </p>
+
+          {agentsMd ? (
+            <div className="relative">
+              <div className="absolute top-2 right-2 z-10">
+                <CopyButton value={agentsMd.markdown} />
+              </div>
+              <pre className="max-h-80 overflow-auto bg-secondary rounded-md p-4 text-xs font-mono whitespace-pre-wrap">
+                {agentsMd.markdown}
+              </pre>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground italic">Generating…</p>
+          )}
         </div>
       </section>
 
