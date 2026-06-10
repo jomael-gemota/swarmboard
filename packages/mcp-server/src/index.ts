@@ -209,6 +209,103 @@ server.tool(
 );
 
 server.tool(
+  "create_task",
+  "Create a single task on a swarmboard board (in backlog). Only do this once the human has agreed on the work. Optionally nest it under a parent task via parent_id to make it a subtask.",
+  {
+    board_id: z.string().describe("The swarmboard board ID (found in the repo's AGENTS.md)"),
+    title: z.string().describe("Short, action-oriented task title"),
+    description: z.string().optional().describe("What the task involves and any acceptance criteria"),
+    module_path: z
+      .string()
+      .optional()
+      .describe("The module or package path this task touches (e.g. packages/auth)"),
+    parent_id: z
+      .string()
+      .optional()
+      .describe("If this is a subtask, the parent task's ID (must be on the same board)"),
+  },
+  async ({ board_id, title, description, module_path, parent_id }) => {
+    try {
+      const task = (await callApi(`/boards/${board_id}/tasks`, "POST", {
+        title,
+        description,
+        modulePath: module_path,
+        parentId: parent_id,
+      })) as { id: string };
+      return {
+        content: [
+          { type: "text", text: `Created task ${task.id} "${title}" on board ${board_id}.` },
+        ],
+      };
+    } catch (err) {
+      return {
+        content: [{ type: "text", text: `Failed to create task: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+server.tool(
+  "create_plan",
+  "Lay out an agreed plan on a swarmboard board in one call: a list of tasks, each with optional subtasks. Use this AFTER you and the human have agreed on the plan — do not author a plan unprompted. Check list_board_tasks first to avoid duplicating existing work. All items are created in backlog.",
+  {
+    board_id: z.string().describe("The swarmboard board ID (found in the repo's AGENTS.md)"),
+    tasks: z
+      .array(
+        z.object({
+          title: z.string().describe("Short, action-oriented task title"),
+          description: z.string().optional().describe("What the task involves"),
+          module_path: z.string().optional().describe("Module/package path this task touches"),
+          subtasks: z
+            .array(
+              z.object({
+                title: z.string().describe("Subtask title"),
+                description: z.string().optional(),
+                module_path: z.string().optional(),
+              })
+            )
+            .optional()
+            .describe("Independently claimable subtasks of this task"),
+        })
+      )
+      .describe("The plan: top-level tasks, each optionally broken into subtasks"),
+  },
+  async ({ board_id, tasks }) => {
+    try {
+      const payload = {
+        tasks: tasks.map((t) => ({
+          title: t.title,
+          description: t.description,
+          modulePath: t.module_path,
+          subtasks: t.subtasks?.map((s) => ({
+            title: s.title,
+            description: s.description,
+            modulePath: s.module_path,
+          })),
+        })),
+      };
+      const result = (await callApi(`/boards/${board_id}/plan`, "POST", payload)) as {
+        count: number;
+      };
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Created ${result.count} task(s)/subtask(s) on board ${board_id} from the plan.`,
+          },
+        ],
+      };
+    } catch (err) {
+      return {
+        content: [{ type: "text", text: `Failed to create plan: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+server.tool(
   "list_board_tasks",
   "List tasks on a swarmboard board so you can pick one to work on. Use the board_id from the repo's AGENTS.md. Defaults to pending (backlog) tasks. Call this at the start of a work session before claiming a task.",
   {
