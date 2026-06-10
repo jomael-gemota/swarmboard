@@ -5,7 +5,7 @@ Swarmboard runs as **two Railway services** built from this monorepo:
 | Railway service        | Source                  | Port | Notes                                  |
 | ---------------------- | ----------------------- | ---- | -------------------------------------- |
 | `swarmboard-api`       | `Dockerfile.api`        | 3001 | Express + Socket.io + BullMQ workers   |
-| `swarmboard-web`       | `Dockerfile.web`        | 8080 | Vite-built React SPA served by nginx   |
+| `swarmboard-web`       | `Dockerfile.web`        | 8080 | Vite-built React SPA served by `serve` |
 
 You also need two managed datastores:
 
@@ -69,7 +69,10 @@ You also need two managed datastores:
 
    > `VITE_*` variables are baked in at build time. If you change `VITE_API_URL` later, redeploy.
 
-6. Deploy. Health check `/healthz` should return `200`.
+6. Deploy. Health check `/` should return `200`.
+
+   > The web container runs `serve -s dist -l tcp://0.0.0.0:${PORT:-8080}` and **listens on `8080`**.
+   > In **Settings → Networking**, make sure the generated domain's **target port is `8080`** (or set a `PORT` variable that matches). A mismatch here is the usual cause of a 502 on the web domain.
 
 ---
 
@@ -108,6 +111,7 @@ If you put both behind one custom domain (e.g. `app.example.com` for the SPA and
 
 | Symptom                                              | Likely cause / fix                                                                                                                                                       |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Web domain returns a **502 Bad Gateway** static page | Railway's edge proxy is targeting a different port than the container listens on. The web container serves on `8080`; set the domain's **target port to `8080`** in **Settings → Networking** (or add a `PORT=8080` variable). Container logs showing `Accepting connections at http://0.0.0.0:8080` confirm the app itself is healthy. |
 | Web loads but login fails with CORS error            | `FRONTEND_URL` on the API service does not exactly match the Web service URL. Check protocol, host, and that there is no trailing slash.                                  |
 | Login succeeds but session "forgets" on refresh      | Cookies are being blocked. Confirm `NODE_ENV=production` on the API, both services are on HTTPS, and there is no browser extension blocking 3rd-party cookies.            |
 | `Cannot connect to Redis` in API logs                | The Redis plugin isn't attached, or `REDIS_URL` doesn't reference it. Use `${{Redis.REDIS_URL}}`.                                                                          |
