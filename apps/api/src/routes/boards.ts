@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Board, Member } from "../models/index.js";
 import { requireAuth, type AuthenticatedRequest } from "../middleware/requireAuth.js";
 import { serialize } from "../lib/serialize.js";
+import { generateAgentsMarkdown } from "../lib/agentsMd.js";
 import { randomBytes } from "crypto";
 import { z } from "zod";
 
@@ -80,6 +81,30 @@ router.get("/:boardId", requireAuth, async (req, res) => {
   }
 
   res.json({ ...board, id: String(board._id) });
+});
+
+// GET /orgs/:orgId/boards/:boardId/agents-md
+// Returns the generated AGENTS.md block a developer commits into their repo.
+router.get("/:boardId/agents-md", requireAuth, async (req, res) => {
+  const userId = (req as AuthenticatedRequest).userId;
+  const { orgId, boardId } = req.params;
+
+  if (!(await assertMember(userId, orgId))) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const board = await Board.findOne({ _id: boardId, organizationId: orgId }).lean();
+  if (!board) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  const apiUrl =
+    process.env.BETTER_AUTH_URL ?? `${req.protocol}://${req.get("host") ?? "localhost:3001"}`;
+
+  const markdown = generateAgentsMarkdown({ board, apiUrl });
+  res.json({ markdown });
 });
 
 // PATCH /orgs/:orgId/boards/:boardId

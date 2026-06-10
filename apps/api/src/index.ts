@@ -19,6 +19,7 @@ import orgRoutes from "./routes/organizations.js";
 import boardRoutes from "./routes/boards.js";
 import taskRoutes from "./routes/tasks.js";
 import agentApiRoutes from "./routes/agentApi.js";
+import agentBoardRoutes from "./routes/agentBoards.js";
 import agentTokenRoutes from "./routes/agentTokens.js";
 import webhookRoutes from "./routes/webhooks.js";
 import dashboardRoutes from "./routes/dashboard.js";
@@ -75,6 +76,7 @@ async function bootstrap() {
   app.use("/api/orgs/:orgId/agent-tokens", agentTokenRoutes);
   app.use("/api/orgs/:orgId/dashboard", dashboardRoutes);
   app.use("/api/v1/tasks", agentApiRoutes);
+  app.use("/api/v1/boards", agentBoardRoutes);
   app.use("/webhooks", webhookRoutes);
 
   // ─── Health Check ───────────────────────────────────────────────────────────
