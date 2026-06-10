@@ -158,6 +158,8 @@ Once connected, the following tools become available to the AI agent:
 
 | Tool | Description |
 |---|---|
+| `create_plan` | Lay out an agreed plan as tasks + subtasks (after human sign-off) — populates an empty board |
+| `create_task` | Create a single backlog task, optionally nested under a parent |
 | `claim_task` | Claim a task when you start working on it — moves it to `in_progress` |
 | `update_task` | Post a progress message to the task's activity feed |
 | `complete_subtask` | Log an individual step as ✅ done or ⬜ not done |
@@ -215,12 +217,15 @@ The `taskId` is the MongoDB `_id` of the task — visible in the task detail pan
 #### Full endpoint reference
 
 ```
-POST /api/v1/tasks/:id/claim      — Start working on a task
-POST /api/v1/tasks/:id/update     — Post a progress message
-POST /api/v1/tasks/:id/subtask    — Log a subtask step
-POST /api/v1/tasks/:id/block      — Flag a blocker
-POST /api/v1/tasks/:id/complete   — Mark task complete (claimed)
-GET  /api/v1/tasks                — List your active tasks
+POST /api/v1/tasks/:id/claim          — Start working on a task
+POST /api/v1/tasks/:id/update         — Post a progress message
+POST /api/v1/tasks/:id/subtask        — Log a subtask step
+POST /api/v1/tasks/:id/block          — Flag a blocker
+POST /api/v1/tasks/:id/complete       — Mark task complete (claimed)
+GET  /api/v1/tasks                    — List your active tasks
+GET  /api/v1/boards/:boardId/tasks    — List a board's tasks (default: backlog)
+POST /api/v1/boards/:boardId/tasks    — Create a task (optional parentId for a subtask)
+POST /api/v1/boards/:boardId/plan     — Create an agreed plan (tasks + nested subtasks)
 ```
 
 ---
