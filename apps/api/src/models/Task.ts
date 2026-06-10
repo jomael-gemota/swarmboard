@@ -10,6 +10,7 @@ export interface ITask extends Document {
   description?: string;
   status: TaskStatus;
   boardId: Types.ObjectId;
+  parentId?: Types.ObjectId;
   ownerId?: Types.ObjectId;
   agentType?: AgentType;
   modulePath?: string;
@@ -34,6 +35,7 @@ const TaskSchema = new Schema<ITask>(
       default: "backlog",
     },
     boardId: { type: Schema.Types.ObjectId, ref: "Board", required: true },
+    parentId: { type: Schema.Types.ObjectId, ref: "Task" },
     ownerId: { type: Schema.Types.ObjectId, ref: "User" },
     agentType: {
       type: String,
@@ -52,6 +54,7 @@ const TaskSchema = new Schema<ITask>(
 );
 
 TaskSchema.index({ boardId: 1, status: 1 });
+TaskSchema.index({ parentId: 1 });
 TaskSchema.index({ modulePath: 1 });
 
 export const Task = model<ITask>("Task", TaskSchema);

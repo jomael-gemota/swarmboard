@@ -50,6 +50,7 @@ function taskToJson(task: unknown, owner?: unknown) {
     ...t,
     id: String(t._id),
     boardId: String(t.boardId),
+    parentId: t.parentId ? String(t.parentId) : null,
     ownerId: t.ownerId ? String(t.ownerId) : null,
     owner: owner ?? undefined,
   };

@@ -26,7 +26,12 @@ async function getTaskWithBoard(taskId: string, organizationId: string) {
 }
 
 function taskJson(task: Record<string, unknown>) {
-  return { ...task, id: String(task._id), boardId: String(task.boardId) };
+  return {
+    ...task,
+    id: String(task._id),
+    boardId: String(task.boardId),
+    parentId: task.parentId ? String(task.parentId) : null,
+  };
 }
 
 // POST /api/v1/tasks/:taskId/claim
