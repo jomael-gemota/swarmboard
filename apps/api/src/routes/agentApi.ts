@@ -47,8 +47,20 @@ router.post("/:taskId/claim", requireAgentToken, async (req, res) => {
 
   const { task, board } = found;
 
-  const updatedTask = await Task.findByIdAndUpdate(
-    task._id,
+  // Atomic claim guard: only refuse if the task is *actively* owned by a
+  // different user (in_progress / in_review). Backlog, unowned, or
+  // self-owned tasks remain claimable. Guarding inside the query filter
+  // prevents two agents pulling from the same backlog from stealing it.
+  const updatedTask = await Task.findOneAndUpdate(
+    {
+      _id: task._id,
+      $nor: [
+        {
+          status: { $in: ["in_progress", "in_review"] },
+          ownerId: { $nin: [null, agentToken.userId] },
+        },
+      ],
+    },
     {
       status: "in_progress",
       ownerId: agentToken.userId,
@@ -59,6 +71,11 @@ router.post("/:taskId/claim", requireAgentToken, async (req, res) => {
     },
     { new: true }
   ).lean();
+
+  if (!updatedTask) {
+    res.status(409).json({ error: "Task is already claimed by another user" });
+    return;
+  }
 
   const log = await ActivityLog.create({
     taskId: task._id,
