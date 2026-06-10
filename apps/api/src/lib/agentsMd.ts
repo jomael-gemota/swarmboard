@@ -34,7 +34,13 @@ swarmboard MCP tools available — use them so the board reflects your work.
 
 1. Call \`list_board_tasks\` with \`board_id: "${boardId}"\` to see the pending
    (backlog) tasks on this board.
-2. Pick the task you are going to work on and call \`claim_task\` with its
+2. **If the board is empty (or has no task for what you've been asked to do):**
+   collaborate with the human on a plan first. Once they have explicitly agreed
+   on the plan, call \`create_plan\` with \`board_id: "${boardId}"\` to lay it
+   out as tasks (each with optional subtasks) before you start building. Do not
+   author a plan unprompted, and don't duplicate tasks that already exist. You
+   can also add a single task with \`create_task\`.
+3. Pick the task you are going to work on and call \`claim_task\` with its
    \`task_id\`. This moves it to \`in_progress\`.
 
 **While working:**
