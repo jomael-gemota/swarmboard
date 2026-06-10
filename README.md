@@ -163,7 +163,12 @@ Once connected, the following tools become available to the AI agent:
 | `complete_subtask` | Log an individual step as ✅ done or ⬜ not done |
 | `flag_blocker` | Report a blocker — moves the task to `in_review` |
 | `complete_task` | Mark the task as claimed-complete, awaiting human verification |
+| `list_board_tasks` | List a board's pending (`backlog`) tasks so the agent can pick one up — uses the board ID from the repo's `AGENTS.md` |
 | `list_my_tasks` | List all tasks currently assigned to you |
+
+#### Self-service task pickup via `AGENTS.md`
+
+Each board can generate an `AGENTS.md` block (Board → **⚙ settings → Agent integration**) that you commit into your repo. It carries the **board ID** (no token — safe to commit) plus workflow instructions, so any agent reading it can call `list_board_tasks` to discover pending work and `claim_task` to pick one up — without you pasting a task ID each session. The agent token stays in your local MCP config.
 
 ### Option B — REST API
 

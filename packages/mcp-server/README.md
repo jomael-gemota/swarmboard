@@ -69,6 +69,7 @@ The agent now has six new tools available. Most agents will discover them automa
 | `complete_subtask` | Logs an individual step or checklist item as ✅ done or ⬜ not done. | Adds an `agent`-sourced activity entry tagged with the subtask |
 | `flag_blocker` | Reports a blocker — missing credentials, environment issues, a test the agent can't resolve, anything needing human input. | Status → `in_review`, blocker note added to feed |
 | `complete_task` | Marks the task as claimed-complete, optionally with a summary of what was accomplished. Awaits human/CI verification. | Status → `in_review`, `claimedComplete` → true |
+| `list_board_tasks` | Lists tasks on a board (defaults to pending `backlog` tasks) so the agent can discover and pick up work. Takes a `board_id` — found in the repo's `AGENTS.md`. | Read-only |
 | `list_my_tasks` | Lists the agent's currently assigned `in_progress` and `in_review` tasks. | Read-only |
 
 All status changes broadcast over Socket.IO in real time, so the kanban board updates live for every viewer.
