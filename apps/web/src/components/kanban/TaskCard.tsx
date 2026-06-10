@@ -11,11 +11,13 @@ import {
   GitPullRequest,
   Bot,
   FolderOpen,
-  ChevronRight,
+  CornerDownRight,
+  ListTree,
 } from "lucide-react";
 
 interface TaskCardProps {
   task: Task;
+  meta?: { subDone: number; subTotal: number; parentTitle?: string };
   onClick: () => void;
 }
 
@@ -26,7 +28,7 @@ const CI_STATUS_ICONS = {
   pending: <Clock className="w-3 h-3 text-gray-400" />,
 };
 
-export default function TaskCard({ task, onClick }: TaskCardProps) {
+export default function TaskCard({ task, meta, onClick }: TaskCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: task.id });
 
@@ -69,10 +71,30 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
         </div>
       )}
 
+      {/* Parent reference (subtask) */}
+      {meta?.parentTitle && (
+        <div className="flex items-center gap-1 mb-1 text-[11px] text-muted-foreground/80 min-w-0">
+          <CornerDownRight className="w-3 h-3 flex-shrink-0" />
+          <span className="truncate" title={meta.parentTitle}>
+            {meta.parentTitle}
+          </span>
+        </div>
+      )}
+
       {/* Title */}
       <p className="text-sm font-medium leading-snug mb-2 group-hover:text-primary transition-colors line-clamp-2">
         {task.title}
       </p>
+
+      {/* Subtask progress (parent) */}
+      {meta && meta.subTotal > 0 && (
+        <div className="flex items-center gap-1 mb-2 text-xs text-muted-foreground">
+          <ListTree className="w-3 h-3" />
+          <span>
+            {meta.subDone}/{meta.subTotal} subtasks
+          </span>
+        </div>
+      )}
 
       {/* Module path */}
       {task.modulePath && (

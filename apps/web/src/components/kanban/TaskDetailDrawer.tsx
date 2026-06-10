@@ -21,15 +21,25 @@ import {
   FolderOpen,
   Pencil,
   Save,
+  CornerDownRight,
+  ListTree,
 } from "lucide-react";
 
 interface TaskDetailDrawerProps {
   task: Task;
   boardId: string;
+  allTasks?: Task[];
+  onTaskClick?: (task: Task) => void;
   onClose: () => void;
 }
 
-export default function TaskDetailDrawer({ task, boardId, onClose }: TaskDetailDrawerProps) {
+export default function TaskDetailDrawer({
+  task,
+  boardId,
+  allTasks = [],
+  onTaskClick,
+  onClose,
+}: TaskDetailDrawerProps) {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
@@ -78,6 +88,9 @@ export default function TaskDetailDrawer({ task, boardId, onClose }: TaskDetailD
 
   const statuses: TaskStatus[] = ["backlog", "in_progress", "in_review", "verified", "deployed"];
 
+  const children = allTasks.filter((t) => t.parentId === task.id);
+  const parent = task.parentId ? allTasks.find((t) => t.id === task.parentId) : undefined;
+
   return (
     <div className="fixed inset-0 z-40 flex justify-end" onClick={onClose}>
       <div
@@ -96,6 +109,16 @@ export default function TaskDetailDrawer({ task, boardId, onClose }: TaskDetailD
               />
             ) : (
               <h2 className="text-base font-semibold leading-snug">{task.title}</h2>
+            )}
+            {parent && (
+              <button
+                onClick={() => onTaskClick?.(parent)}
+                className="flex items-center gap-1 mt-1 text-xs text-muted-foreground hover:text-primary transition-colors min-w-0 max-w-full"
+                title={parent.title}
+              >
+                <CornerDownRight className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">Subtask of: {parent.title}</span>
+              </button>
             )}
             <p className="text-xs text-muted-foreground mt-1">
               Created {formatDate(task.createdAt)}
@@ -249,6 +272,38 @@ export default function TaskDetailDrawer({ task, boardId, onClose }: TaskDetailD
                   </span>
                 </span>
               )}
+            </div>
+          )}
+
+          {/* Subtasks */}
+          {children.length > 0 && (
+            <div>
+              <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                <ListTree className="w-3.5 h-3.5" />
+                Subtasks ({children.length})
+              </h3>
+              <div className="space-y-1.5">
+                {children.map((child) => (
+                  <button
+                    key={child.id}
+                    onClick={() => onTaskClick?.(child)}
+                    className="w-full flex items-center gap-2 text-left px-2.5 py-2 rounded-md bg-secondary/50 hover:bg-secondary transition-colors"
+                  >
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-semibold flex-shrink-0",
+                        STATUS_COLORS[child.status]
+                      )}
+                    >
+                      {STATUS_LABELS[child.status]}
+                    </span>
+                    <span className="text-sm truncate flex-1">{child.title}</span>
+                    {child.verifiedComplete && (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

@@ -6,9 +6,16 @@ import { Button } from "@/components/ui/button";
 import { STATUS_LABELS, STATUS_COLORS, cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 
+interface TaskMeta {
+  subDone: number;
+  subTotal: number;
+  parentTitle?: string;
+}
+
 interface KanbanColumnProps {
   status: TaskStatus;
   tasks: Task[];
+  taskMeta?: Record<string, TaskMeta>;
   onTaskClick: (task: Task) => void;
   onAddTask: (status: TaskStatus) => void;
 }
@@ -16,6 +23,7 @@ interface KanbanColumnProps {
 export default function KanbanColumn({
   status,
   tasks,
+  taskMeta,
   onTaskClick,
   onAddTask,
 }: KanbanColumnProps) {
@@ -60,7 +68,12 @@ export default function KanbanColumn({
           )}
         >
           {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
+            <TaskCard
+              key={task.id}
+              task={task}
+              meta={taskMeta?.[task.id]}
+              onClick={() => onTaskClick(task)}
+            />
           ))}
 
           {tasks.length === 0 && (

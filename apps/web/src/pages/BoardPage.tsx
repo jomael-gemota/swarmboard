@@ -125,6 +125,20 @@ export default function BoardPage() {
     {} as Record<TaskStatus, Task[]>
   );
 
+  // Per-task hierarchy metadata for card badges (subtask progress + parent ref).
+  const isDone = (t: Task) => t.status === "verified" || t.status === "deployed";
+  const titleById = new Map(tasks.map((t) => [t.id, t.title]));
+  const taskMeta: Record<string, { subDone: number; subTotal: number; parentTitle?: string }> = {};
+  for (const t of tasks) {
+    const meta = (taskMeta[t.id] ??= { subDone: 0, subTotal: 0 });
+    if (t.parentId) {
+      meta.parentTitle = titleById.get(t.parentId);
+      const parentMeta = (taskMeta[t.parentId] ??= { subDone: 0, subTotal: 0 });
+      parentMeta.subTotal += 1;
+      if (isDone(t)) parentMeta.subDone += 1;
+    }
+  }
+
   return (
     <div className="flex flex-col h-full min-w-0">
       {/* Board header */}
@@ -191,6 +205,7 @@ export default function BoardPage() {
                 key={status}
                 status={status}
                 tasks={tasksByStatus[status]}
+                taskMeta={taskMeta}
                 onTaskClick={setSelectedTask}
                 onAddTask={(s) => setCreateStatus(s)}
               />
@@ -204,6 +219,8 @@ export default function BoardPage() {
         <TaskDetailDrawer
           task={selectedTask}
           boardId={boardId}
+          allTasks={tasks}
+          onTaskClick={setSelectedTask}
           onClose={() => setSelectedTask(null)}
         />
       )}
