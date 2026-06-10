@@ -209,6 +209,57 @@ server.tool(
 );
 
 server.tool(
+  "list_board_tasks",
+  "List tasks on a swarmboard board so you can pick one to work on. Use the board_id from the repo's AGENTS.md. Defaults to pending (backlog) tasks. Call this at the start of a work session before claiming a task.",
+  {
+    board_id: z.string().describe("The swarmboard board ID (found in the repo's AGENTS.md)"),
+    status: z
+      .enum(["backlog", "in_progress", "in_review", "verified", "deployed"])
+      .optional()
+      .describe("Which task status to list (default: backlog — the pending tasks to pick up)"),
+  },
+  async ({ board_id, status }) => {
+    try {
+      const query = status ? `?status=${status}` : "";
+      const tasks = await callApi(`/boards/${board_id}/tasks${query}`, "GET");
+      const list = tasks as Array<{
+        id: string;
+        title: string;
+        status: string;
+        description?: string;
+        modulePath?: string;
+      }>;
+
+      if (list.length === 0) {
+        return {
+          content: [
+            { type: "text", text: `No ${status ?? "backlog"} tasks on board ${board_id}.` },
+          ],
+        };
+      }
+
+      const formatted = list
+        .map(
+          (t) =>
+            `• [${t.id}] ${t.title} — ${t.status}${t.modulePath ? ` (${t.modulePath})` : ""}${
+              t.description ? `\n    ${t.description}` : ""
+            }`
+        )
+        .join("\n");
+
+      return {
+        content: [{ type: "text", text: `Tasks on board ${board_id}:\n${formatted}` }],
+      };
+    } catch (err) {
+      return {
+        content: [{ type: "text", text: `Failed to list board tasks: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+server.tool(
   "list_my_tasks",
   "List your currently assigned in-progress and in-review tasks from swarmboard.",
   {},
