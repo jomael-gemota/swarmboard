@@ -71,6 +71,7 @@ export const TaskSchema = z.object({
   description: z.string().nullable(),
   status: TaskStatus,
   boardId: z.string(),
+  parentId: z.string().nullable().optional(),
   ownerId: z.string().nullable(),
   agentType: AgentType.nullable(),
   modulePath: z.string().nullable(),
@@ -138,6 +139,36 @@ export const CompleteTaskPayload = z.object({
   summary: z.string().max(2000).optional(),
 });
 export type CompleteTaskPayload = z.infer<typeof CompleteTaskPayload>;
+
+export const CreateAgentTaskPayload = z.object({
+  title: z.string().min(1).max(500),
+  description: z.string().max(5000).optional(),
+  modulePath: z.string().max(500).optional(),
+  parentId: z.string().optional(),
+});
+export type CreateAgentTaskPayload = z.infer<typeof CreateAgentTaskPayload>;
+
+export const PlanTaskItem = z.object({
+  title: z.string().min(1).max(500),
+  description: z.string().max(5000).optional(),
+  modulePath: z.string().max(500).optional(),
+  subtasks: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(500),
+        description: z.string().max(5000).optional(),
+        modulePath: z.string().max(500).optional(),
+      })
+    )
+    .max(50)
+    .optional(),
+});
+export type PlanTaskItem = z.infer<typeof PlanTaskItem>;
+
+export const CreatePlanPayload = z.object({
+  tasks: z.array(PlanTaskItem).min(1).max(50),
+});
+export type CreatePlanPayload = z.infer<typeof CreatePlanPayload>;
 
 // ─── Socket.io Events ─────────────────────────────────────────────────────────
 
