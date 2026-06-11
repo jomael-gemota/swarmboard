@@ -76,6 +76,8 @@ export const TaskSchema = z.object({
   ownerId: z.string().nullable(),
   agentType: AgentType.nullable(),
   modulePath: z.string().nullable(),
+  declaredFiles: z.array(z.string()).optional(),
+  changedFiles: z.array(z.string()).optional(),
   claimedComplete: z.boolean(),
   verifiedComplete: z.boolean(),
   isStale: z.boolean(),
@@ -119,6 +121,7 @@ export type AgentToken = z.infer<typeof AgentTokenSchema>;
 export const ClaimTaskPayload = z.object({
   agentType: AgentType.optional(),
   modulePath: z.string().optional(),
+  files: z.array(z.string().max(500)).max(200).optional(),
 });
 export type ClaimTaskPayload = z.infer<typeof ClaimTaskPayload>;
 
@@ -181,7 +184,7 @@ export interface ServerToClientEvents {
   "task:created": (task: Task) => void;
   "task:deleted": (taskId: string) => void;
   "activity:created": (log: ActivityLog & { taskId: string }) => void;
-  "conflict:detected": (data: { taskId: string; conflictingTaskId: string; modulePath: string }) => void;
+  "conflict:detected": (data: { taskId: string; conflictingTaskId: string; files: string[] }) => void;
   "task:stale": (data: { taskId: string }) => void;
 }
 
