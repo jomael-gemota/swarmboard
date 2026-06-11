@@ -46,7 +46,7 @@ export default function TaskCard({ task, meta, onClick }: TaskCardProps) {
       {...listeners}
       onClick={onClick}
       className={cn(
-        "group bg-card border rounded-lg p-3 cursor-pointer select-none",
+        "group bg-card border rounded-lg px-2.5 py-2 cursor-pointer select-none",
         "hover:border-primary/50 transition-all duration-150",
         task.hasConflict && "border-amber-500/60 bg-amber-500/5",
         task.isStale && "border-gray-500/40 opacity-75",
@@ -55,15 +55,15 @@ export default function TaskCard({ task, meta, onClick }: TaskCardProps) {
     >
       {/* Conflict / Stale warnings */}
       {(task.hasConflict || task.isStale) && (
-        <div className="flex gap-2 mb-2">
+        <div className="flex gap-1.5 mb-1">
           {task.hasConflict && (
-            <span className="flex items-center gap-1 text-xs text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded">
+            <span className="flex items-center gap-1 text-[10px] text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded">
               <AlertTriangle className="w-2.5 h-2.5" />
               Conflict
             </span>
           )}
           {task.isStale && (
-            <span className="flex items-center gap-1 text-xs text-gray-400 bg-gray-400/10 px-1.5 py-0.5 rounded">
+            <span className="flex items-center gap-1 text-[10px] text-gray-400 bg-gray-400/10 px-1.5 py-0.5 rounded">
               <Clock className="w-2.5 h-2.5" />
               Stale
             </span>
@@ -73,8 +73,8 @@ export default function TaskCard({ task, meta, onClick }: TaskCardProps) {
 
       {/* Parent reference (subtask) */}
       {meta?.parentTitle && (
-        <div className="flex items-center gap-1 mb-1 text-[11px] text-muted-foreground/80 min-w-0">
-          <CornerDownRight className="w-3 h-3 flex-shrink-0" />
+        <div className="flex items-center gap-1 mb-0.5 text-[10px] text-muted-foreground/70 min-w-0">
+          <CornerDownRight className="w-2.5 h-2.5 flex-shrink-0" />
           <span className="truncate" title={meta.parentTitle}>
             {meta.parentTitle}
           </span>
@@ -82,57 +82,49 @@ export default function TaskCard({ task, meta, onClick }: TaskCardProps) {
       )}
 
       {/* Title */}
-      <p className="text-sm font-medium leading-snug mb-2 group-hover:text-primary transition-colors line-clamp-2">
+      <p className="text-xs font-medium leading-snug mb-1.5 group-hover:text-primary transition-colors line-clamp-2">
         {task.title}
       </p>
 
-      {/* Subtask progress (parent) */}
-      {meta && meta.subTotal > 0 && (
-        <div className="flex items-center gap-1 mb-2 text-xs text-muted-foreground">
-          <ListTree className="w-3 h-3" />
-          <span>
-            {meta.subDone}/{meta.subTotal} subtasks
-          </span>
+      {/* Subtask progress + module path (inline row) */}
+      {(meta?.subTotal ?? 0) > 0 || task.modulePath ? (
+        <div className="flex items-center gap-2 mb-1.5">
+          {meta && meta.subTotal > 0 && (
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <ListTree className="w-2.5 h-2.5" />
+              {meta.subDone}/{meta.subTotal}
+            </span>
+          )}
+          {task.modulePath && (
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-mono truncate min-w-0">
+              <FolderOpen className="w-2.5 h-2.5 flex-shrink-0" />
+              <span className="truncate">{task.modulePath}</span>
+            </span>
+          )}
         </div>
-      )}
-
-      {/* Module path */}
-      {task.modulePath && (
-        <div className="flex items-center gap-1 mb-2">
-          <FolderOpen className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-          <span className="text-xs text-muted-foreground font-mono truncate max-w-[160px]">
-            {task.modulePath}
-          </span>
-        </div>
-      )}
+      ) : null}
 
       {/* Footer row */}
-      <div className="flex items-center justify-between gap-2 mt-2">
-        <div className="flex items-center gap-2 min-w-0">
-          {/* Owner avatar */}
+      <div className="flex items-center justify-between gap-1.5 mt-1">
+        <div className="flex items-center gap-1.5 min-w-0">
           {task.owner && (
             <div
-              className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary flex-shrink-0"
+              className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold text-primary flex-shrink-0"
               title={task.owner.name}
             >
               {task.owner.name[0]?.toUpperCase()}
             </div>
           )}
-
-          {/* Agent type */}
           {task.agentType && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Bot className="w-3 h-3" />
+            <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+              <Bot className="w-2.5 h-2.5" />
               {AGENT_LABELS[task.agentType] ?? task.agentType}
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          {/* CI status */}
+        <div className="flex items-center gap-1 flex-shrink-0">
           {task.ciStatus && CI_STATUS_ICONS[task.ciStatus]}
-
-          {/* PR link */}
           {task.prUrl && (
             <a
               href={task.prUrl}
@@ -142,25 +134,22 @@ export default function TaskCard({ task, meta, onClick }: TaskCardProps) {
               className="text-muted-foreground hover:text-foreground"
               title="View PR"
             >
-              <GitPullRequest className="w-3 h-3" />
+              <GitPullRequest className="w-2.5 h-2.5" />
             </a>
           )}
-
-          {/* Verified badge */}
           {task.verifiedComplete && (
-            <span title="Verified complete"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /></span>
+            <span title="Verified complete">
+              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+            </span>
           )}
-
-          {/* Claimed (not verified) */}
           {task.claimedComplete && !task.verifiedComplete && (
             <span
-              className="text-[10px] text-amber-400 border border-amber-400/40 px-1 rounded"
+              className="text-[9px] text-amber-400 border border-amber-400/40 px-1 rounded"
               title="Agent claimed complete — awaiting verification"
             >
               claimed
             </span>
           )}
-
           <span className="text-[10px] text-muted-foreground">
             {formatRelative(task.updatedAt)}
           </span>

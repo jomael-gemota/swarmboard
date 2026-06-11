@@ -30,9 +30,9 @@ export default function KanbanColumn({
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (
-    <div className="flex flex-col w-72 flex-shrink-0">
+    <div className="flex flex-col w-64 flex-shrink-0 h-full">
       {/* Column header */}
-      <div className="flex items-center justify-between mb-3 px-1">
+      <div className="flex items-center justify-between mb-2 px-1 flex-shrink-0">
         <div className="flex items-center gap-2">
           <span
             className={cn(
@@ -58,12 +58,12 @@ export default function KanbanColumn({
         </Button>
       </div>
 
-      {/* Drop zone */}
+      {/* Drop zone — fills remaining height and scrolls independently */}
       <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
         <div
           ref={setNodeRef}
           className={cn(
-            "flex-1 space-y-2.5 p-2 rounded-xl min-h-[120px] transition-colors",
+            "flex-1 min-h-0 overflow-y-auto space-y-1.5 p-2 rounded-xl transition-colors",
             isOver ? "bg-primary/5 ring-1 ring-primary/30" : "bg-secondary/30"
           )}
         >
