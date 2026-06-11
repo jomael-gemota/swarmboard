@@ -64,12 +64,19 @@ server.tool(
       .string()
       .optional()
       .describe("The module or package path you will be working in (e.g. packages/auth)"),
+    files: z
+      .array(z.string())
+      .optional()
+      .describe(
+        "Specific files/paths you will be changing (e.g. ['apps/api/src/routes/tasks.ts']). Used to flag conflicts when another active task touches the same file."
+      ),
   },
-  async ({ task_id, agent_type, module_path }) => {
+  async ({ task_id, agent_type, module_path, files }) => {
     try {
       await callApi(`/tasks/${task_id}/claim`, "POST", {
         agentType: agent_type,
         modulePath: module_path,
+        files,
       });
       return {
         content: [
