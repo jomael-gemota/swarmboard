@@ -3,7 +3,7 @@ import { Task, Board, Member, ActivityLog } from "../models/index.js";
 import mongoose from "mongoose";
 import { requireAuth, type AuthenticatedRequest } from "../middleware/requireAuth.js";
 import { emitToBoard } from "../lib/socket.js";
-import { checkConflicts } from "../services/conflictDetection.js";
+import { recomputeBoardConflicts } from "../services/conflictDetection.js";
 import { fetchAuthUsers, serializeUser } from "../lib/users.js";
 import { z } from "zod";
 
@@ -28,6 +28,7 @@ const UpdateTaskSchema = z.object({
   ownerId: z.string().nullable().optional(),
   agentType: z.enum(["cursor", "claude_code", "copilot", "windsurf", "other"]).nullable().optional(),
   modulePath: z.string().max(500).nullable().optional(),
+  declaredFiles: z.array(z.string().max(500)).max(200).optional(),
   position: z.number().int().optional(),
 });
 
@@ -161,14 +162,19 @@ router.patch("/:taskId", requireAuth, async (req, res) => {
     });
   }
 
-  if (parsed.data.modulePath !== undefined) {
-    await checkConflicts(boardId, taskId, parsed.data.modulePath ?? null);
-  }
-
   const userMap = await fetchAuthUsers([updated.ownerId]);
   const json = taskToJson(updated, serializeUser(updated.ownerId, userMap));
   emitToBoard(boardId, "task:updated", json as never);
   res.json(json);
+
+  // Footprint or active-status changes can create/clear conflicts.
+  if (
+    parsed.data.modulePath !== undefined ||
+    parsed.data.declaredFiles !== undefined ||
+    (parsed.data.status && parsed.data.status !== prevTask.status)
+  ) {
+    await recomputeBoardConflicts(boardId);
+  }
 });
 
 // DELETE /boards/:boardId/tasks/:taskId
@@ -207,6 +213,9 @@ router.delete("/:taskId", requireAuth, async (req, res) => {
   await ActivityLog.deleteMany({ taskId });
   await Task.findByIdAndDelete(taskId);
   emitToBoard(boardId, "task:deleted", taskId);
+
+  // Removing a task may clear conflicts it was causing on others.
+  await recomputeBoardConflicts(boardId);
   res.status(204).send();
 });
 

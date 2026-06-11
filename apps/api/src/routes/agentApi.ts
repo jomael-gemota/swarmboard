@@ -2,7 +2,7 @@ import { Router } from "express";
 import { Task, Board, ActivityLog } from "../models/index.js";
 import { requireAgentToken, type AgentRequest } from "../middleware/requireAgentToken.js";
 import { emitToBoard } from "../lib/socket.js";
-import { checkConflicts } from "../services/conflictDetection.js";
+import { recomputeBoardConflicts } from "../services/conflictDetection.js";
 import {
   ClaimTaskPayload,
   UpdateTaskPayload,
@@ -71,6 +71,7 @@ router.post("/:taskId/claim", requireAgentToken, async (req, res) => {
       ownerId: agentToken.userId,
       ...(parsed.data.agentType && { agentType: parsed.data.agentType }),
       ...(parsed.data.modulePath && { modulePath: parsed.data.modulePath }),
+      ...(parsed.data.files && { declaredFiles: parsed.data.files }),
       isStale: false,
       claimedComplete: false,
     },
@@ -90,10 +91,6 @@ router.post("/:taskId/claim", requireAgentToken, async (req, res) => {
     metadata: { agentType: parsed.data.agentType, modulePath: parsed.data.modulePath },
   });
 
-  if (parsed.data.modulePath) {
-    await checkConflicts(String(board._id), String(task._id), parsed.data.modulePath);
-  }
-
   const boardId = String(board._id);
   emitToBoard(boardId, "task:updated", taskJson(updatedTask as Record<string, unknown>) as never);
   emitToBoard(boardId, "activity:created", {
@@ -103,6 +100,10 @@ router.post("/:taskId/claim", requireAgentToken, async (req, res) => {
   } as never);
 
   res.json({ task: updatedTask, log });
+
+  // Re-evaluate file-overlap conflicts now that this task is active and has a
+  // declared footprint (module path / files).
+  await recomputeBoardConflicts(boardId);
 });
 
 // POST /api/v1/tasks/:taskId/update

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { Task, Board, ActivityLog } from "../models/index.js";
 import { emitToBoard } from "../lib/socket.js";
+import { recomputeBoardConflicts } from "../services/conflictDetection.js";
 import { createHmac, timingSafeEqual } from "crypto";
 import type { Request, Response } from "express";
 import type { ActivitySource } from "../models/ActivityLog.js";
@@ -84,17 +85,36 @@ router.post("/github/:boardId", async (req: Request, res: Response) => {
 
   try {
     if (event === "push") {
-      const commits: Array<{ id?: string; message: string; url: string; author: { name: string } }> =
-        payload.commits ?? [];
+      const commits: Array<{
+        id?: string;
+        message: string;
+        url: string;
+        author: { name: string };
+        added?: string[];
+        modified?: string[];
+        removed?: string[];
+      }> = payload.commits ?? [];
 
       for (const commit of commits) {
         const ids = extractTaskIds(commit.message);
+        const files = [
+          ...(commit.added ?? []),
+          ...(commit.modified ?? []),
+          ...(commit.removed ?? []),
+        ];
         for (const id of ids) {
           await updateTaskFromGit(id, boardId, "git", `Commit: ${commit.message}`, {
             commitUrl: commit.url,
             commitSha: commit.id,
             author: commit.author?.name,
+            files,
           });
+          if (files.length > 0) {
+            await Task.updateOne(
+              { _id: id, boardId },
+              { $addToSet: { changedFiles: { $each: files } } }
+            );
+          }
         }
       }
     } else if (event === "pull_request") {
@@ -196,6 +216,9 @@ router.post("/github/:boardId", async (req: Request, res: Response) => {
       }
     }
 
+    // Pushed commits / PR status changes can alter the file footprint of
+    // active tasks — re-evaluate overlap conflicts for the board.
+    await recomputeBoardConflicts(boardId);
     res.json({ ok: true });
   } catch (err) {
     console.error("Webhook error:", err);
@@ -223,16 +246,34 @@ router.post("/gitlab/:boardId", async (req: Request, res: Response) => {
 
   try {
     if (event === "Push Hook") {
-      const commits: Array<{ message: string; url: string; author: { name: string } }> =
-        payload.commits ?? [];
+      const commits: Array<{
+        message: string;
+        url: string;
+        author: { name: string };
+        added?: string[];
+        modified?: string[];
+        removed?: string[];
+      }> = payload.commits ?? [];
 
       for (const commit of commits) {
         const ids = extractTaskIds(commit.message);
+        const files = [
+          ...(commit.added ?? []),
+          ...(commit.modified ?? []),
+          ...(commit.removed ?? []),
+        ];
         for (const id of ids) {
           await updateTaskFromGit(id, boardId, "git", `Commit: ${commit.message}`, {
             commitUrl: commit.url,
             author: commit.author?.name,
+            files,
           });
+          if (files.length > 0) {
+            await Task.updateOne(
+              { _id: id, boardId },
+              { $addToSet: { changedFiles: { $each: files } } }
+            );
+          }
         }
       }
     } else if (event === "Merge Request Hook") {
@@ -256,6 +297,7 @@ router.post("/gitlab/:boardId", async (req: Request, res: Response) => {
       }
     }
 
+    await recomputeBoardConflicts(boardId);
     res.json({ ok: true });
   } catch (err) {
     console.error("GitLab webhook error:", err);

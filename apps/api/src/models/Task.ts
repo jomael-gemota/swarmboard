@@ -14,6 +14,8 @@ export interface ITask extends Document {
   ownerId?: Types.ObjectId;
   agentType?: AgentType;
   modulePath?: string;
+  declaredFiles: string[];
+  changedFiles: string[];
   claimedComplete: boolean;
   verifiedComplete: boolean;
   isStale: boolean;
@@ -42,6 +44,8 @@ const TaskSchema = new Schema<ITask>(
       enum: ["cursor", "claude_code", "copilot", "windsurf", "other"],
     },
     modulePath: String,
+    declaredFiles: { type: [String], default: [] },
+    changedFiles: { type: [String], default: [] },
     claimedComplete: { type: Boolean, default: false },
     verifiedComplete: { type: Boolean, default: false },
     isStale: { type: Boolean, default: false },
@@ -56,5 +60,7 @@ const TaskSchema = new Schema<ITask>(
 TaskSchema.index({ boardId: 1, status: 1 });
 TaskSchema.index({ parentId: 1 });
 TaskSchema.index({ modulePath: 1 });
+TaskSchema.index({ boardId: 1, changedFiles: 1 });
+TaskSchema.index({ boardId: 1, declaredFiles: 1 });
 
 export const Task = model<ITask>("Task", TaskSchema);
