@@ -62,6 +62,7 @@ export const BoardSchema = z.object({
   repoProvider: z.enum(["github", "gitlab"]).nullable().optional(),
   webhookSecret: z.string().nullable().optional(),
   createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
 });
 export type Board = z.infer<typeof BoardSchema>;
 
@@ -81,6 +82,7 @@ export const TaskSchema = z.object({
   hasConflict: z.boolean(),
   prUrl: z.string().nullable(),
   ciStatus: z.enum(["pending", "running", "passed", "failed"]).nullable(),
+  position: z.number(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   owner: UserSchema.optional(),
@@ -90,11 +92,13 @@ export type Task = z.infer<typeof TaskSchema>;
 export const ActivityLogSchema = z.object({
   id: z.string(),
   taskId: z.string(),
+  userId: z.string().nullable().optional(),
   source: ActivitySource,
   content: z.string(),
   summary: z.string().nullable(),
   metadata: z.record(z.unknown()).nullable(),
   createdAt: z.string().datetime(),
+  user: UserSchema.optional(),
 });
 export type ActivityLog = z.infer<typeof ActivityLogSchema>;
 
