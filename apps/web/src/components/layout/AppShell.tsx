@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   Bug,
-  LayoutDashboard,
+  BookOpen,
   Columns,
   Key,
   Users,
@@ -162,7 +162,7 @@ export default function AppShell({ children }: AppShellProps) {
         <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1.5">
           {orgId && (
             <>
-              {navItem(`/orgs/${orgId}`, <LayoutDashboard className="w-4 h-4" />, "Dashboard", { exact: true })}
+              {navItem(`/orgs/${orgId}`, <BookOpen className="w-4 h-4" />, "Documentation", { exact: true })}
               {navItem(
                 `/orgs/${orgId}/members`,
                 <Users className="w-4 h-4" />,

@@ -4,7 +4,7 @@ import { useSession } from "@/lib/auth-client";
 import AppShell from "@/components/layout/AppShell";
 import LoginPage from "@/pages/LoginPage";
 import NewOrgPage from "@/pages/NewOrgPage";
-import DashboardPage from "@/pages/DashboardPage";
+import DocumentationPage from "@/pages/DocumentationPage";
 import BoardPage from "@/pages/BoardPage";
 import BoardSettingsPage from "@/pages/BoardSettingsPage";
 import MembersPage from "@/pages/MembersPage";
@@ -62,7 +62,7 @@ function AppRoutes() {
         element={
           <AuthGuard>
             <AppShell>
-              <DashboardPage />
+              <DocumentationPage />
             </AppShell>
           </AuthGuard>
         }
