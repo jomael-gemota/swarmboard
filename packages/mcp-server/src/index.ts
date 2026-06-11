@@ -327,6 +327,7 @@ server.tool(
         status: string;
         description?: string;
         modulePath?: string;
+        parentId?: string | null;
       }>;
 
       if (list.length === 0) {
@@ -337,13 +338,33 @@ server.tool(
         };
       }
 
+      const byId = new Map(list.map((t) => [t.id, t]));
+      const childrenOf = new Map<string, typeof list>();
+      for (const t of list) {
+        if (t.parentId && byId.has(t.parentId)) {
+          const siblings = childrenOf.get(t.parentId) ?? [];
+          siblings.push(t);
+          childrenOf.set(t.parentId, siblings);
+        }
+      }
+
+      type Task = (typeof list)[number];
+      const line = (t: Task, indent: string) =>
+        `${indent}• [${t.id}] ${t.title} — ${t.status}${
+          t.modulePath ? ` (${t.modulePath})` : ""
+        }${t.description ? `\n${indent}    ${t.description}` : ""}`;
+
+      // Top level = tasks with no parent, or whose parent isn't in this list
+      // (e.g. filtered out by status). Sub-tasks nest beneath their parent.
       const formatted = list
-        .map(
-          (t) =>
-            `• [${t.id}] ${t.title} — ${t.status}${t.modulePath ? ` (${t.modulePath})` : ""}${
-              t.description ? `\n    ${t.description}` : ""
-            }`
-        )
+        .filter((t) => !t.parentId || !byId.has(t.parentId))
+        .map((parent) => {
+          const subtasks = childrenOf.get(parent.id) ?? [];
+          const head = line(parent, "");
+          if (subtasks.length === 0) return head;
+          const nested = subtasks.map((s) => line(s, "  ")).join("\n");
+          return `${head}\n${nested}`;
+        })
         .join("\n");
 
       return {
