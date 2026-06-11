@@ -51,6 +51,31 @@ export default function AgentTokensPage() {
     setTimeout(() => setCopiedId(null), 2000);
   }
 
+  // The API the frontend actually talks to — used so the REST example is
+  // copy-paste ready against this instance.
+  const apiBase =
+    import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
+    (window.location.origin.includes("5173")
+      ? "http://localhost:3001"
+      : window.location.origin);
+
+  const mcpConfig = `{
+  "mcpServers": {
+    "swarmboard": {
+      "command": "npx",
+      "args": ["-y", "@swarmboard/mcp-server"],
+      "env": {
+        "SWARMBOARD_TOKEN": "swb_your_token_here"
+      }
+    }
+  }
+}`;
+
+  const restExample = `curl -X POST ${apiBase}/api/v1/tasks/{taskId}/update \\
+  -H "Authorization: Bearer swb_your_token_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "message": "Refactored auth module" }'`;
+
   return (
     <div className="page-shell page-content">
       <div className="flex items-center justify-between mb-6">
@@ -147,24 +172,50 @@ export default function AgentTokensPage() {
 
       {/* Usage instructions */}
       <div className="mt-8 bg-card border rounded-xl p-5 shadow-sm">
-        <h3 className="text-sm font-semibold mb-3">Using your token</h3>
-        <div className="space-y-4 text-sm">
+        <h3 className="text-sm font-semibold">Using your token</h3>
+        <p className="text-xs text-muted-foreground mt-0.5 mb-4">
+          Pick one option. Replace{" "}
+          <span className="font-mono">swb_your_token_here</span> with a token from
+          above.
+        </p>
+        <div className="space-y-5 text-sm">
           <div>
-            <p className="text-muted-foreground mb-2">
-              <strong className="text-foreground">Option A — MCP Server</strong> (recommended for
-              Cursor, Claude Code)
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-flex items-center rounded-md bg-primary/15 text-primary px-2 py-0.5 text-xs font-semibold">
+                Option A
+              </span>
+              <span className="text-muted-foreground text-xs">
+                MCP Server — recommended for Cursor, Claude Code, Windsurf
+              </span>
+            </div>
+            <CodeBlock
+              filename=".cursor/mcp.json"
+              code={mcpConfig}
+              copied={copiedId === "mcp"}
+              onCopy={() => copyToken(mcpConfig, "mcp")}
+            />
+            <p className="text-xs text-muted-foreground mt-1.5">
+              The server points at the hosted instance by default. Running the API
+              locally? Add{" "}
+              <span className="font-mono">"SWARMBOARD_URL": "http://localhost:3001"</span>{" "}
+              inside <span className="font-mono">env</span>.
             </p>
-            <code className="block text-xs font-mono bg-secondary px-3 py-2 rounded-md">
-              {`// .cursor/mcp.json or mcp_config.json\n{\n  "mcpServers": {\n    "swarmboard": {\n      "command": "npx",\n      "args": ["-y", "@swarmboard/mcp-server"],\n      "env": {\n        "SWARMBOARD_TOKEN": "swb_your_token_here",\n        "SWARMBOARD_URL": "https://your-swarmboard.com"\n      }\n    }\n  }\n}`}
-            </code>
           </div>
           <div>
-            <p className="text-muted-foreground mb-2">
-              <strong className="text-foreground">Option B — REST API</strong>
-            </p>
-            <code className="block text-xs font-mono bg-secondary px-3 py-2 rounded-md">
-              {`curl -X POST https://your-swarmboard.com/api/v1/tasks/{taskId}/update \\\n  -H "Authorization: Bearer swb_your_token_here" \\\n  -H "Content-Type: application/json" \\\n  -d '{"message": "Refactored auth module"}'`}
-            </code>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-flex items-center rounded-md bg-secondary text-foreground px-2 py-0.5 text-xs font-semibold border">
+                Option B
+              </span>
+              <span className="text-muted-foreground text-xs">
+                REST API — any script or process
+              </span>
+            </div>
+            <CodeBlock
+              filename="bash"
+              code={restExample}
+              copied={copiedId === "rest"}
+              onCopy={() => copyToken(restExample, "rest")}
+            />
           </div>
         </div>
       </div>
@@ -200,6 +251,45 @@ export default function AgentTokensPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function CodeBlock({
+  filename,
+  code,
+  copied,
+  onCopy,
+}: {
+  filename: string;
+  code: string;
+  copied: boolean;
+  onCopy: () => void;
+}) {
+  return (
+    <div className="rounded-lg border bg-secondary/40 overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/70 bg-secondary/70">
+        <span className="text-xs font-mono text-muted-foreground">{filename}</span>
+        <button
+          onClick={onCopy}
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {copied ? (
+            <>
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+              Copied
+            </>
+          ) : (
+            <>
+              <Copy className="w-3.5 h-3.5" />
+              Copy
+            </>
+          )}
+        </button>
+      </div>
+      <pre className="p-3.5 overflow-x-auto text-xs font-mono leading-relaxed text-foreground/90">
+        <code>{code}</code>
+      </pre>
     </div>
   );
 }
