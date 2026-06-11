@@ -9,6 +9,7 @@ import {
   SubtaskPayload,
   BlockTaskPayload,
   CompleteTaskPayload,
+  ReportChangesPayload,
 } from "@swarmboard/shared";
 
 const router = Router();
@@ -139,6 +140,63 @@ router.post("/:taskId/update", requireAgentToken, async (req, res) => {
   } as never);
 
   res.json({ log });
+});
+
+// POST /api/v1/tasks/:taskId/changes — report changed files + line ranges
+router.post("/:taskId/changes", requireAgentToken, async (req, res) => {
+  const { agentToken } = req as AgentRequest;
+
+  const parsed = ReportChangesPayload.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const found = await getTaskWithBoard(req.params.taskId, agentToken.organizationId);
+  if (!found) {
+    res.status(404).json({ error: "Task not found" });
+    return;
+  }
+
+  const lineRanges = parsed.data.files.flatMap((f) =>
+    (f.ranges ?? []).map((r) => ({ file: f.path, start: r.start, end: r.end }))
+  );
+  const filePaths = parsed.data.files.map((f) => f.path);
+
+  // A report is a full snapshot of the current diff: replace lineRanges, and
+  // keep the cumulative changed-file list in sync for file-level fallback.
+  const updatedTask = await Task.findByIdAndUpdate(
+    found.task._id,
+    {
+      lineRanges,
+      isStale: false,
+      ...(filePaths.length > 0 && { $addToSet: { changedFiles: { $each: filePaths } } }),
+    },
+    { new: true }
+  ).lean();
+
+  const log = await ActivityLog.create({
+    taskId: found.task._id,
+    userId: agentToken.userId,
+    source: "agent",
+    content: `Agent reported changes to ${filePaths.length} file(s)${
+      lineRanges.length ? ` (${lineRanges.length} line range(s))` : ""
+    }`,
+    metadata: { files: filePaths, lineRanges },
+  });
+
+  const boardId = String(found.board._id);
+  emitToBoard(boardId, "task:updated", taskJson(updatedTask as Record<string, unknown>) as never);
+  emitToBoard(boardId, "activity:created", {
+    ...log.toObject(),
+    id: String(log._id),
+    taskId: String(found.task._id),
+  } as never);
+
+  res.json({ task: updatedTask, log });
+
+  // Line ranges feed line-level overlap detection.
+  await recomputeBoardConflicts(boardId);
 });
 
 // POST /api/v1/tasks/:taskId/subtask

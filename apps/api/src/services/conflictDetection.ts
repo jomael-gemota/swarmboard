@@ -17,10 +17,16 @@ export function normalizePath(p: string): string {
     .replace(/\/+$/, "");
 }
 
+interface LineRange {
+  start: number;
+  end: number;
+}
+
 interface FootprintSource {
   modulePath?: string | null;
   declaredFiles?: string[] | null;
   changedFiles?: string[] | null;
+  lineRanges?: { file: string; start: number; end: number }[] | null;
 }
 
 /**
@@ -42,22 +48,80 @@ export function taskFootprint(task: FootprintSource): string[] {
   return [...set];
 }
 
+/** A path points at a concrete file if its last segment contains a dot. */
+function looksLikeFile(path: string): boolean {
+  return (path.split("/").pop() ?? "").includes(".");
+}
+
 /**
- * Paths where two footprints overlap. Two paths overlap when they are equal or
- * one is an ancestor directory of the other (so a folder declaration collides
- * with a specific file changed beneath it). Returns the more specific path of
- * each overlapping pair.
+ * Paths where two footprints overlap — true file-level matching.
+ *
+ * Two paths overlap only when they are exactly equal (the same file or the
+ * same explicit module/path string), or one is an ancestor directory of the
+ * other AND the descendant is a concrete file. A directory never conflicts
+ * with another directory, so broad module-path declarations (e.g. `src` vs
+ * `src/components`) are not flagged.
  */
 export function overlappingPaths(a: string[], b: string[]): string[] {
   const overlaps = new Set<string>();
   for (const x of a) {
     for (const y of b) {
-      if (x === y || x.startsWith(`${y}/`) || y.startsWith(`${x}/`)) {
-        overlaps.add(x.length >= y.length ? x : y);
+      if (x === y) {
+        overlaps.add(x);
+      } else if (x.startsWith(`${y}/`) && looksLikeFile(x)) {
+        overlaps.add(x);
+      } else if (y.startsWith(`${x}/`) && looksLikeFile(y)) {
+        overlaps.add(y);
       }
     }
   }
   return [...overlaps];
+}
+
+/** Map a task's reported line ranges by normalized file path. */
+function rangeMap(task: FootprintSource): Map<string, LineRange[]> {
+  const map = new Map<string, LineRange[]>();
+  for (const r of task.lineRanges ?? []) {
+    const file = normalizePath(r.file);
+    if (!file) continue;
+    const arr = map.get(file) ?? [];
+    arr.push({ start: r.start, end: r.end });
+    map.set(file, arr);
+  }
+  return map;
+}
+
+function rangesOverlap(a: LineRange[], b: LineRange[]): boolean {
+  for (const x of a) {
+    for (const y of b) {
+      if (x.start <= y.end && y.start <= x.end) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Files where two tasks actually conflict. A shared file conflicts when both
+ * sides reported overlapping line ranges, OR when line-range data is missing on
+ * either side (file-level fallback).
+ */
+export function conflictingFiles(
+  pathsA: string[],
+  rangesA: Map<string, LineRange[]>,
+  pathsB: string[],
+  rangesB: Map<string, LineRange[]>
+): string[] {
+  const result: string[] = [];
+  for (const path of overlappingPaths(pathsA, pathsB)) {
+    const ra = rangesA.get(path);
+    const rb = rangesB.get(path);
+    if (ra && rb) {
+      if (rangesOverlap(ra, rb)) result.push(path);
+    } else {
+      result.push(path);
+    }
+  }
+  return result;
 }
 
 function taskToJson(task: Record<string, unknown>, owner: unknown) {
@@ -89,6 +153,7 @@ export async function recomputeBoardConflicts(boardId: string): Promise<void> {
     doc: t as Record<string, unknown>,
     hadConflict: !!t.hasConflict,
     footprint: taskFootprint(t as FootprintSource),
+    ranges: rangeMap(t as FootprintSource),
   }));
 
   const overlapFilesById = new Map<string, Set<string>>();
@@ -96,7 +161,12 @@ export async function recomputeBoardConflicts(boardId: string): Promise<void> {
 
   for (let i = 0; i < entries.length; i++) {
     for (let j = i + 1; j < entries.length; j++) {
-      const overlap = overlappingPaths(entries[i].footprint, entries[j].footprint);
+      const overlap = conflictingFiles(
+        entries[i].footprint,
+        entries[i].ranges,
+        entries[j].footprint,
+        entries[j].ranges
+      );
       if (overlap.length === 0) continue;
 
       const a = entries[i].id;
