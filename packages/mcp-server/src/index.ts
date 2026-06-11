@@ -122,6 +122,52 @@ server.tool(
 );
 
 server.tool(
+  "report_changes",
+  "Report the files and line ranges you have changed on a task (from `git diff`), so swarmboard can flag line-level conflicts with other agents touching the same lines. Call this after making edits and whenever your diff changes; each call replaces the previously reported set with your current full diff.",
+  {
+    task_id: z.string().describe("The swarmboard task ID"),
+    files: z
+      .array(
+        z.object({
+          path: z.string().describe("Repo-relative file path (e.g. apps/api/src/routes/tasks.ts)"),
+          ranges: z
+            .array(
+              z.object({
+                start: z.number().int().describe("First changed line (1-based)"),
+                end: z.number().int().describe("Last changed line (1-based)"),
+              })
+            )
+            .optional()
+            .describe("Changed line ranges in this file. Omit for file-level only."),
+        })
+      )
+      .describe("The files you changed, each with its changed line ranges"),
+  },
+  async ({ task_id, files }) => {
+    try {
+      await callApi(`/tasks/${task_id}/changes`, "POST", { files });
+      const fileCount = files.length;
+      const rangeCount = files.reduce((n, f) => n + (f.ranges?.length ?? 0), 0);
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Reported ${fileCount} file(s)${
+              rangeCount ? ` and ${rangeCount} line range(s)` : ""
+            } for task ${task_id}.`,
+          },
+        ],
+      };
+    } catch (err) {
+      return {
+        content: [{ type: "text", text: `Failed to report changes: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+server.tool(
   "complete_subtask",
   "Mark a subtask or step as complete on a swarmboard task. Use this for individual steps within a larger task.",
   {
