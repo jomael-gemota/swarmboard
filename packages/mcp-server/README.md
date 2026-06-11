@@ -25,8 +25,7 @@ In your swarmboard workspace, go to **Agent Tokens → New token**, give it a na
       "command": "npx",
       "args": ["-y", "@swarmboard/mcp-server"],
       "env": {
-        "SWARMBOARD_TOKEN": "swb_your_token_here",
-        "SWARMBOARD_URL": "https://your-swarmboard.com"
+        "SWARMBOARD_TOKEN": "swb_your_token_here"
       }
     }
   }
@@ -42,8 +41,7 @@ In your swarmboard workspace, go to **Agent Tokens → New token**, give it a na
       "command": "npx",
       "args": ["-y", "@swarmboard/mcp-server"],
       "env": {
-        "SWARMBOARD_TOKEN": "swb_your_token_here",
-        "SWARMBOARD_URL": "https://your-swarmboard.com"
+        "SWARMBOARD_TOKEN": "swb_your_token_here"
       }
     }
   }
@@ -52,11 +50,11 @@ In your swarmboard workspace, go to **Agent Tokens → New token**, give it a na
 
 **Windsurf**, **VS Code MCP extension**, and any other MCP-compatible client follow the same pattern — a `command`/`args`/`env` config block.
 
-Set `SWARMBOARD_URL` to `http://localhost:3001` for local development, or to your deployed swarmboard instance.
+`SWARMBOARD_URL` is optional — it defaults to the hosted instance. Add `"SWARMBOARD_URL": "http://localhost:3001"` to the `env` block only when running the swarmboard API locally.
 
 ### 3. Reload your editor
 
-The agent now has six new tools available. Most agents will discover them automatically and call them when relevant. You can also prompt explicitly, e.g. *"Claim task abc123 from swarmboard"*.
+The agent now has nine new tools available. Most agents will discover them automatically and call them when relevant. You can also prompt explicitly, e.g. *"Claim task abc123 from swarmboard"*.
 
 ---
 
@@ -87,7 +85,7 @@ When `complete_task` is called, swarmboard marks the task **`claimedComplete`** 
 | Env var | Required | Default | Description |
 |---|---|---|---|
 | `SWARMBOARD_TOKEN` | ✅ | — | Agent token (`swb_…`) created in the swarmboard UI |
-| `SWARMBOARD_URL` | optional | `http://localhost:3001` | Base URL of the swarmboard API |
+| `SWARMBOARD_URL` | optional | `https://swarmboardapi-production.up.railway.app` (hosted instance) | Base URL of the swarmboard API. Set to `http://localhost:3001` for local development. |
 
 The MCP server authenticates every request with `Authorization: Bearer $SWARMBOARD_TOKEN` against the swarmboard `/api/v1/tasks/*` endpoints.
 
