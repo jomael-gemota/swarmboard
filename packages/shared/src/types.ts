@@ -78,6 +78,9 @@ export const TaskSchema = z.object({
   modulePath: z.string().nullable(),
   declaredFiles: z.array(z.string()).optional(),
   changedFiles: z.array(z.string()).optional(),
+  lineRanges: z
+    .array(z.object({ file: z.string(), start: z.number(), end: z.number() }))
+    .optional(),
   claimedComplete: z.boolean(),
   verifiedComplete: z.boolean(),
   isStale: z.boolean(),
@@ -130,6 +133,26 @@ export const UpdateTaskPayload = z.object({
   metadata: z.record(z.unknown()).optional(),
 });
 export type UpdateTaskPayload = z.infer<typeof UpdateTaskPayload>;
+
+export const ReportChangesPayload = z.object({
+  files: z
+    .array(
+      z.object({
+        path: z.string().min(1).max(500),
+        ranges: z
+          .array(
+            z.object({
+              start: z.number().int().min(1),
+              end: z.number().int().min(1),
+            })
+          )
+          .max(1000)
+          .optional(),
+      })
+    )
+    .max(200),
+});
+export type ReportChangesPayload = z.infer<typeof ReportChangesPayload>;
 
 export const SubtaskPayload = z.object({
   title: z.string().min(1).max(500),
