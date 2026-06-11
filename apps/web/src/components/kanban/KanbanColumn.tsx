@@ -9,6 +9,7 @@ import { Plus } from "lucide-react";
 interface TaskMeta {
   subDone: number;
   subTotal: number;
+  percent: number;
   parentTitle?: string;
 }
 

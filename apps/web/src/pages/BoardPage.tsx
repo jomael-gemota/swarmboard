@@ -15,7 +15,7 @@ import { getSocket } from "@/lib/socket";
 import KanbanColumn from "@/components/kanban/KanbanColumn";
 import TaskDetailDrawer from "@/components/kanban/TaskDetailDrawer";
 import CreateTaskDialog from "@/components/kanban/CreateTaskDialog";
-import { STATUS_LABELS } from "@/lib/utils";
+import { STATUS_LABELS, subtaskProgress } from "@/lib/utils";
 import { Loader2, Wifi, WifiOff, Settings } from "lucide-react";
 
 const STATUSES: TaskStatus[] = ["backlog", "in_progress", "in_review", "verified", "deployed"];
@@ -118,26 +118,39 @@ export default function BoardPage() {
     );
   }
 
+  // Only top-level tasks appear as column cards; sub-tasks are shown nested
+  // inside their parent (card badge + detail drawer) to keep columns uncluttered.
   const tasksByStatus = STATUSES.reduce<Record<TaskStatus, Task[]>>(
     (acc, status) => {
-      acc[status] = tasks.filter((t) => t.status === status);
+      acc[status] = tasks.filter((t) => t.status === status && !t.parentId);
       return acc;
     },
     {} as Record<TaskStatus, Task[]>
   );
 
   // Per-task hierarchy metadata for card badges (subtask progress + parent ref).
-  const isDone = (t: Task) => t.status === "verified" || t.status === "deployed";
+  // Derived from the live `tasks` array, so it recomputes on every socket update.
   const titleById = new Map(tasks.map((t) => [t.id, t.title]));
-  const taskMeta: Record<string, { subDone: number; subTotal: number; parentTitle?: string }> = {};
+  const childrenByParent = new Map<string, Task[]>();
   for (const t of tasks) {
-    const meta = (taskMeta[t.id] ??= { subDone: 0, subTotal: 0 });
     if (t.parentId) {
-      meta.parentTitle = titleById.get(t.parentId);
-      const parentMeta = (taskMeta[t.parentId] ??= { subDone: 0, subTotal: 0 });
-      parentMeta.subTotal += 1;
-      if (isDone(t)) parentMeta.subDone += 1;
+      const arr = childrenByParent.get(t.parentId) ?? [];
+      arr.push(t);
+      childrenByParent.set(t.parentId, arr);
     }
+  }
+  const taskMeta: Record<
+    string,
+    { subDone: number; subTotal: number; percent: number; parentTitle?: string }
+  > = {};
+  for (const t of tasks) {
+    const { done, total, percent } = subtaskProgress(childrenByParent.get(t.id) ?? []);
+    taskMeta[t.id] = {
+      subDone: done,
+      subTotal: total,
+      percent,
+      parentTitle: t.parentId ? titleById.get(t.parentId) : undefined,
+    };
   }
 
   return (

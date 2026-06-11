@@ -46,6 +46,33 @@ export const STATUS_COLORS: Record<TaskStatus, string> = {
   deployed: "bg-[#a878e0]/18 text-[#d4b6f5] border-[#a878e0]/40",
 };
 
+// Fractional completion weight per status, used to compute a parent task's
+// progress from its sub-tasks. Tuned so later stages count for more.
+export const STATUS_PROGRESS_WEIGHT: Record<TaskStatus, number> = {
+  backlog: 0,
+  in_progress: 0.4,
+  in_review: 0.7,
+  verified: 1,
+  deployed: 1,
+};
+
+export function subtaskProgress(children: { status: TaskStatus }[]): {
+  done: number;
+  total: number;
+  percent: number;
+} {
+  const total = children.length;
+  if (total === 0) return { done: 0, total: 0, percent: 0 };
+  const done = children.filter(
+    (c) => c.status === "verified" || c.status === "deployed"
+  ).length;
+  const weighted = children.reduce(
+    (sum, c) => sum + STATUS_PROGRESS_WEIGHT[c.status],
+    0
+  );
+  return { done, total, percent: Math.round((weighted / total) * 100) };
+}
+
 export const AGENT_LABELS: Record<string, string> = {
   cursor: "Cursor",
   claude_code: "Claude Code",

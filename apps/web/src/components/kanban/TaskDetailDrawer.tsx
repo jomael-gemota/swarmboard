@@ -17,7 +17,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import ActivityFeed from "./ActivityFeed";
-import { STATUS_LABELS, STATUS_COLORS, AGENT_LABELS, cn, formatDate } from "@/lib/utils";
+import { STATUS_LABELS, STATUS_COLORS, AGENT_LABELS, cn, formatDate, subtaskProgress } from "@/lib/utils";
 import {
   X,
   ExternalLink,
@@ -112,6 +112,7 @@ export default function TaskDetailDrawer({
 
   const children = allTasks.filter((t) => t.parentId === task.id);
   const parent = task.parentId ? allTasks.find((t) => t.id === task.parentId) : undefined;
+  const progress = subtaskProgress(children);
 
   return (
     <div className="fixed inset-0 z-40 flex justify-end" onClick={onClose}>
@@ -315,6 +316,26 @@ export default function TaskDetailDrawer({
                 <ListTree className="w-3.5 h-3.5" />
                 Subtasks ({children.length})
               </h3>
+              {/* Progress */}
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-1 text-xs">
+                  <span className="text-muted-foreground">
+                    {progress.done}/{progress.total} complete
+                  </span>
+                  <span className="font-semibold text-foreground tabular-nums">
+                    {progress.percent}%
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all duration-300",
+                      progress.percent >= 100 ? "bg-emerald-500" : "bg-primary"
+                    )}
+                    style={{ width: `${progress.percent}%` }}
+                  />
+                </div>
+              </div>
               <div className="space-y-1.5">
                 {children.map((child) => (
                   <button
