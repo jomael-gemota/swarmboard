@@ -216,7 +216,7 @@ export default function TaskDetailDrawer({
             )}
             {task.hasConflict && (
               <span className="flex items-center gap-1 text-xs text-amber-400 border border-amber-400/40 px-2 py-0.5 rounded-md">
-                <AlertTriangle className="w-3 h-3" /> Module conflict
+                <AlertTriangle className="w-3 h-3" /> File conflict
               </span>
             )}
             {task.isStale && (
@@ -258,6 +258,29 @@ export default function TaskDetailDrawer({
               </div>
             )}
           </div>
+
+          {/* Files touched (declared at claim time + changed via Git) */}
+          {((task.declaredFiles?.length ?? 0) > 0 || (task.changedFiles?.length ?? 0) > 0) && (
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Files touched</Label>
+              <div className="space-y-1">
+                {(task.declaredFiles ?? []).map((f) => (
+                  <div key={`declared-${f}`} className="flex items-center gap-1.5 text-xs font-mono min-w-0">
+                    <FolderOpen className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate" title={f}>{f}</span>
+                    <span className="text-[10px] text-muted-foreground/60 font-sans flex-shrink-0">declared</span>
+                  </div>
+                ))}
+                {(task.changedFiles ?? []).map((f) => (
+                  <div key={`changed-${f}`} className="flex items-center gap-1.5 text-xs font-mono min-w-0">
+                    <GitPullRequest className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate" title={f}>{f}</span>
+                    <span className="text-[10px] text-muted-foreground/60 font-sans flex-shrink-0">from Git</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Description */}
           <div>
