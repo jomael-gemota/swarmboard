@@ -1,6 +1,6 @@
 {
   "name": "@swarmboard/mcp-server",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "MCP (Model Context Protocol) server that lets AI coding agents like Cursor, Claude Code, Copilot, and Windsurf report task status, post progress updates, flag blockers, and mark work complete on a swarmboard kanban board — natively, with no manual prompting.",
   "type": "module",
   "bin": {
