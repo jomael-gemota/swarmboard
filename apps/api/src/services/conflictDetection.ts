@@ -138,9 +138,11 @@ function taskToJson(task: Record<string, unknown>, owner: unknown) {
 /**
  * Recompute file-overlap conflicts across all active tasks on a board.
  *
- * A task conflicts when its footprint overlaps that of another active task.
- * Tasks whose `hasConflict` flag flips are persisted and broadcast; tasks that
- * newly enter conflict get a system activity log naming the overlapping files.
+ * A task conflicts when its footprint overlaps that of another active task
+ * owned by a *different* agent/user — same-owner (or unowned) overlaps are not
+ * flagged, since a single owner coordinates their own work. Tasks whose
+ * `hasConflict` flag flips are persisted and broadcast; tasks that newly enter
+ * conflict get a system activity log naming the overlapping files.
  */
 export async function recomputeBoardConflicts(boardId: string): Promise<void> {
   const tasks = await Task.find({
@@ -152,6 +154,7 @@ export async function recomputeBoardConflicts(boardId: string): Promise<void> {
     id: String(t._id),
     doc: t as Record<string, unknown>,
     hadConflict: !!t.hasConflict,
+    ownerId: t.ownerId ? String(t.ownerId) : null,
     footprint: taskFootprint(t as FootprintSource),
     ranges: rangeMap(t as FootprintSource),
   }));
@@ -161,6 +164,12 @@ export async function recomputeBoardConflicts(boardId: string): Promise<void> {
 
   for (let i = 0; i < entries.length; i++) {
     for (let j = i + 1; j < entries.length; j++) {
+      // A conflict requires two *different* owners working at once. Tasks owned
+      // by the same agent/user (or lacking an owner) are not flagged.
+      const ownerA = entries[i].ownerId;
+      const ownerB = entries[j].ownerId;
+      if (!ownerA || !ownerB || ownerA === ownerB) continue;
+
       const overlap = conflictingFiles(
         entries[i].footprint,
         entries[i].ranges,
