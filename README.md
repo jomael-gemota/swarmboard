@@ -127,8 +127,7 @@ The MCP server is published to npm as `@swarmboard/mcp-server`. Add the followin
       "command": "npx",
       "args": ["-y", "@swarmboard/mcp-server"],
       "env": {
-        "SWARMBOARD_TOKEN": "swb_your_token_here",
-        "SWARMBOARD_URL": "https://your-swarmboard.com"
+        "SWARMBOARD_TOKEN": "swb_your_token_here"
       }
     }
   }
@@ -136,7 +135,7 @@ The MCP server is published to npm as `@swarmboard/mcp-server`. Add the followin
 ```
 
 > `npx -y` downloads and runs the package automatically — no local install or path needed.  
-> Set `SWARMBOARD_URL` to where your swarmboard API is deployed (or `http://localhost:3001` for local dev).
+> `SWARMBOARD_URL` is optional — it defaults to the hosted instance (`https://swarmboardapi-production.up.railway.app`). Add `"SWARMBOARD_URL": "http://localhost:3001"` to the `env` block when running the API locally.
 
 **Running locally from source** (for contributors):
 
