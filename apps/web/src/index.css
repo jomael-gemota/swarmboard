@@ -43,7 +43,7 @@
   }
   html,
   body {
-    font-family: "Segoe UI", "Segoe UI Variable", "Inter", "Roboto", "Helvetica Neue", Arial, sans-serif;
+    font-family: "Source Sans 3", "Source Sans Pro", "Segoe UI", "Segoe UI Variable", "Inter", "Roboto", "Helvetica Neue", Arial, sans-serif;
   }
   body {
     @apply bg-background text-foreground antialiased;

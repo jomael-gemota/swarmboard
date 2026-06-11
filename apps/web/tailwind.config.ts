@@ -7,6 +7,8 @@ export default {
   theme: {
     fontFamily: {
       sans: [
+        "Source Sans 3",
+        "Source Sans Pro",
         "Segoe UI",
         "Segoe UI Variable",
         "Inter",
