@@ -18,8 +18,8 @@ You typically don't install this package directly — it ships as a transitive d
 | `User` / `UserSchema` | A swarmboard user (synced from Better Auth) |
 | `Member` / `MemberSchema` | A user's role inside an organization |
 | `Board` / `BoardSchema` | A kanban board, optionally linked to a git repository |
-| `Task` / `TaskSchema` | A kanban card with status, owner, agent type, conflict flags, CI status, and PR link |
-| `ActivityLog` / `ActivityLogSchema` | A log entry on a task (agent / git / ci / system / user source) |
+| `Task` / `TaskSchema` | A kanban card with status, owner, agent type, conflict flags, CI status, PR link, board `position`, and optional `parentId` for subtasks |
+| `ActivityLog` / `ActivityLogSchema` | A log entry on a task (agent / git / ci / system / user source), with the originating `user` |
 | `AgentToken` / `AgentTokenSchema` | A per-developer API key used by AI agents to authenticate |
 
 ### Enums (Zod enums + types)
@@ -29,13 +29,15 @@ You typically don't install this package directly — it ships as a transitive d
 - `AgentType` — `"cursor" | "claude_code" | "copilot" | "windsurf" | "other"`
 - `ActivitySource` — `"agent" | "git" | "ci" | "system" | "user"`
 
-### Agent API request payloads (used by the MCP server and `POST /api/v1/tasks/*`)
+### Agent API request payloads (used by the MCP server and `POST /api/v1/tasks/*` and `/api/v1/boards/*`)
 
 - `ClaimTaskPayload` — body for `POST /tasks/:id/claim`
 - `UpdateTaskPayload` — body for `POST /tasks/:id/update`
 - `SubtaskPayload` — body for `POST /tasks/:id/subtask`
 - `BlockTaskPayload` — body for `POST /tasks/:id/block`
 - `CompleteTaskPayload` — body for `POST /tasks/:id/complete`
+- `CreateAgentTaskPayload` — body for `POST /boards/:boardId/tasks` (create one task, optional `parentId`)
+- `CreatePlanPayload` / `PlanTaskItem` — body for `POST /boards/:boardId/plan` (create an agreed plan: tasks with nested subtasks)
 
 ### Socket.IO event contracts
 
