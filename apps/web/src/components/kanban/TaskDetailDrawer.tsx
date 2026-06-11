@@ -114,6 +114,16 @@ export default function TaskDetailDrawer({
   const parent = task.parentId ? allTasks.find((t) => t.id === task.parentId) : undefined;
   const progress = subtaskProgress(children);
 
+  const rangesByFile = (task.lineRanges ?? []).reduce<Record<string, { start: number; end: number }[]>>(
+    (acc, r) => {
+      (acc[r.file] ??= []).push({ start: r.start, end: r.end });
+      return acc;
+    },
+    {}
+  );
+  const formatRanges = (ranges: { start: number; end: number }[]) =>
+    ranges.map((r) => (r.start === r.end ? `L${r.start}` : `L${r.start}\u2013${r.end}`)).join(", ");
+
   return (
     <div className="fixed inset-0 z-40 flex justify-end" onClick={onClose}>
       <div
@@ -271,13 +281,22 @@ export default function TaskDetailDrawer({
                     <span className="text-[10px] text-muted-foreground/60 font-sans flex-shrink-0">declared</span>
                   </div>
                 ))}
-                {(task.changedFiles ?? []).map((f) => (
-                  <div key={`changed-${f}`} className="flex items-center gap-1.5 text-xs font-mono min-w-0">
-                    <GitPullRequest className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                    <span className="truncate" title={f}>{f}</span>
-                    <span className="text-[10px] text-muted-foreground/60 font-sans flex-shrink-0">from Git</span>
-                  </div>
-                ))}
+                {(task.changedFiles ?? []).map((f) => {
+                  const ranges = rangesByFile[f];
+                  return (
+                    <div key={`changed-${f}`} className="flex items-center gap-1.5 text-xs font-mono min-w-0">
+                      <GitPullRequest className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                      <span className="truncate" title={f}>{f}</span>
+                      {ranges?.length ? (
+                        <span className="text-[10px] text-amber-300/80 font-sans flex-shrink-0" title="Reported changed lines">
+                          {formatRanges(ranges)}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground/60 font-sans flex-shrink-0">changed</span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
