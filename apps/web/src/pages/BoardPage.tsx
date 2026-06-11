@@ -75,6 +75,7 @@ export default function BoardPage() {
       queryClient.setQueryData<Task[]>(["tasks", boardId], (old) =>
         old?.filter((t) => t.id !== taskId) ?? []
       );
+      setSelectedTask((prev) => (prev?.id === taskId ? null : prev));
     });
 
     return () => {

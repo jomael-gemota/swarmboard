@@ -8,6 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import ActivityFeed from "./ActivityFeed";
 import { STATUS_LABELS, STATUS_COLORS, AGENT_LABELS, cn, formatDate } from "@/lib/utils";
 import {
@@ -23,6 +31,7 @@ import {
   Save,
   CornerDownRight,
   ListTree,
+  Trash2,
 } from "lucide-react";
 
 interface TaskDetailDrawerProps {
@@ -46,6 +55,8 @@ export default function TaskDetailDrawer({
   const [editDesc, setEditDesc] = useState(task.description ?? "");
   const [editModule, setEditModule] = useState(task.modulePath ?? "");
   const [editStatus, setEditStatus] = useState<TaskStatus>(task.status);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const { data: logs = [], refetch: refetchLogs } = useQuery({
     queryKey: ["activity", task.id],
@@ -57,6 +68,17 @@ export default function TaskDetailDrawer({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks", boardId] });
       setEditing(false);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => tasksApi.delete(boardId, task.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", boardId] });
+      onClose();
+    },
+    onError: (err: Error) => {
+      setDeleteError(err.message ?? "Failed to delete task. You may not have permission.");
     },
   });
 
@@ -136,10 +158,21 @@ export default function TaskDetailDrawer({
                 </Button>
               </>
             ) : (
-              <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
-                <Pencil className="w-3.5 h-3.5 mr-1" />
-                Edit
-              </Button>
+              <>
+                <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
+                  <Pencil className="w-3.5 h-3.5 mr-1" />
+                  Edit
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => { setDeleteError(null); setShowDeleteConfirm(true); }}
+                  title="Delete task"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </>
             )}
             <Button size="icon" variant="ghost" onClick={onClose}>
               <X className="w-4 h-4" />
@@ -316,6 +349,51 @@ export default function TaskDetailDrawer({
           </div>
         </div>
       </div>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete task?</DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>
+                  <span className="font-medium text-foreground">"{task.title}"</span> will be
+                  permanently deleted and cannot be recovered.
+                </p>
+                {children.length > 0 && (
+                  <p className="flex items-start gap-1.5 text-amber-400">
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-px" />
+                    This will also delete {children.length} sub-task
+                    {children.length > 1 ? "s" : ""}.
+                  </p>
+                )}
+                {deleteError && (
+                  <p className="text-red-400">{deleteError}</p>
+                )}
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={deleteMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
