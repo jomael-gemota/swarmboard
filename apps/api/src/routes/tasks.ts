@@ -192,6 +192,19 @@ router.delete("/:taskId", requireAuth, async (req, res) => {
     return;
   }
 
+  // Cascade-delete immediate child tasks and their activity logs
+  const children = await Task.find({ parentId: taskId, boardId }).lean();
+  if (children.length > 0) {
+    const childIds = children.map((c) => c._id);
+    await ActivityLog.deleteMany({ taskId: { $in: childIds } });
+    await Task.deleteMany({ _id: { $in: childIds } });
+    for (const child of children) {
+      emitToBoard(boardId, "task:deleted", String(child._id));
+    }
+  }
+
+  // Delete the parent task and its activity logs
+  await ActivityLog.deleteMany({ taskId });
   await Task.findByIdAndDelete(taskId);
   emitToBoard(boardId, "task:deleted", taskId);
   res.status(204).send();
