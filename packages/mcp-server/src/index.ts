@@ -8,14 +8,16 @@
  *
  * Configuration via environment variables:
  *   SWARMBOARD_TOKEN  — agent token (required)
- *   SWARMBOARD_URL    — base URL (default: http://localhost:3001)
+ *   SWARMBOARD_URL    — base URL (optional; defaults to the hosted instance).
+ *                       Set to http://localhost:3001 when running the API locally.
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-const SWARMBOARD_URL = process.env.SWARMBOARD_URL ?? "http://localhost:3001";
+const SWARMBOARD_URL =
+  process.env.SWARMBOARD_URL ?? "https://swarmboardapi-production.up.railway.app";
 const SWARMBOARD_TOKEN = process.env.SWARMBOARD_TOKEN;
 
 if (!SWARMBOARD_TOKEN) {
