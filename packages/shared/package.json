@@ -1,6 +1,6 @@
 {
   "name": "@swarmboard/shared",
-  "version": "1.4.0",
+  "version": "1.6.0",
   "description": "Shared TypeScript types and Zod schemas powering the swarmboard kanban platform — task models, organization/board entities, agent API payloads, and Socket.IO event contracts used by the swarmboard server, web client, and MCP server.",
   "type": "module",
   "main": "./dist/index.js",
