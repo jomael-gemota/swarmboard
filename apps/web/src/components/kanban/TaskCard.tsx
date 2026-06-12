@@ -2,12 +2,21 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "@swarmboard/shared";
 import { cn } from "@/lib/utils";
-import { ListTree } from "lucide-react";
+import { ListTree, FileCode } from "lucide-react";
 
 interface TaskCardProps {
   task: Task;
   meta?: { subDone: number; subTotal: number; percent: number; parentTitle?: string };
   onClick: () => void;
+}
+
+const MAX_FILES_SHOWN = 3;
+
+// Last two path segments keep the filename (and a bit of context) visible
+// without overflowing the narrow card; the full path lives in the tooltip.
+function shortPath(path: string): string {
+  const segments = path.split("/").filter(Boolean);
+  return segments.slice(-2).join("/") || path;
 }
 
 export default function TaskCard({ task, meta, onClick }: TaskCardProps) {
@@ -21,6 +30,16 @@ export default function TaskCard({ task, meta, onClick }: TaskCardProps) {
   };
 
   const hasSubtasks = !!meta && meta.subTotal > 0;
+
+  // Prefer the files actually changed (reported from git); before any changes
+  // are reported, fall back to the files declared when the task was claimed.
+  const touchedFiles =
+    task.changedFiles && task.changedFiles.length > 0
+      ? task.changedFiles
+      : task.declaredFiles ?? [];
+  const hasFiles = touchedFiles.length > 0;
+  const isChanged = !!task.changedFiles && task.changedFiles.length > 0;
+  const extraFiles = touchedFiles.length - MAX_FILES_SHOWN;
 
   return (
     <div
@@ -51,6 +70,27 @@ export default function TaskCard({ task, meta, onClick }: TaskCardProps) {
           </div>
         )}
       </div>
+
+      {/* Files the agent touched (changed files, or declared if none reported) */}
+      {hasFiles && (
+        <div className="mt-1.5 space-y-0.5">
+          {touchedFiles.slice(0, MAX_FILES_SHOWN).map((file) => (
+            <div
+              key={file}
+              className="flex items-center gap-1 text-[10px] text-muted-foreground font-mono min-w-0"
+              title={`${file} (${isChanged ? "changed" : "declared"})`}
+            >
+              <FileCode className="w-2.5 h-2.5 flex-shrink-0 text-muted-foreground/70" />
+              <span className="truncate">{shortPath(file)}</span>
+            </div>
+          ))}
+          {extraFiles > 0 && (
+            <div className="pl-3.5 text-[10px] text-muted-foreground/70">
+              +{extraFiles} more file{extraFiles > 1 ? "s" : ""}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Subtask counter (progress bar lives in the detail drawer) */}
       {hasSubtasks && (
