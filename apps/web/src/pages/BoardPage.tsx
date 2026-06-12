@@ -65,10 +65,10 @@ export default function BoardPage() {
     });
 
     socket.on("task:created", (newTask) => {
-      queryClient.setQueryData<Task[]>(["tasks", boardId], (old) => [
-        ...(old ?? []),
-        newTask as Task,
-      ]);
+      queryClient.setQueryData<Task[]>(["tasks", boardId], (old) => {
+        if (old?.some((t) => t.id === (newTask as Task).id)) return old;
+        return [...(old ?? []), newTask as Task];
+      });
     });
 
     socket.on("task:deleted", (taskId) => {
