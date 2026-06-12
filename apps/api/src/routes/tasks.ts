@@ -27,6 +27,7 @@ const UpdateTaskSchema = z.object({
   ownerId: z.string().nullable().optional(),
   agentType: z.enum(["cursor", "claude_code", "copilot", "windsurf", "other"]).nullable().optional(),
   declaredFiles: z.array(z.string().max(500)).max(200).optional(),
+  blocked: z.boolean().optional(),
   position: z.number().int().optional(),
 });
 
@@ -140,9 +141,13 @@ router.patch("/:taskId", requireAuth, async (req, res) => {
     return;
   }
 
+  // Clearing the blocked flag also clears the stored reason.
+  const blockUpdate =
+    parsed.data.blocked === false ? { blockReason: null } : {};
+
   const updated = await Task.findByIdAndUpdate(
     taskId,
-    { ...parsed.data, isStale: false },
+    { ...parsed.data, ...blockUpdate, isStale: false },
     { new: true }
   ).lean();
 
@@ -157,6 +162,15 @@ router.patch("/:taskId", requireAuth, async (req, res) => {
       userId,
       source: "user",
       content: `Status changed from ${prevTask.status} to ${parsed.data.status}`,
+    });
+  }
+
+  if (parsed.data.blocked === false && prevTask.blocked) {
+    await ActivityLog.create({
+      taskId,
+      userId,
+      source: "user",
+      content: "✅ Blocker cleared",
     });
   }
 

@@ -21,6 +21,8 @@ export interface ITask extends Document {
   verifiedComplete: boolean;
   isStale: boolean;
   hasConflict: boolean;
+  blocked: boolean;
+  blockReason?: string;
   prUrl?: string;
   ciStatus?: CiStatus;
   position: number;
@@ -55,6 +57,8 @@ const TaskSchema = new Schema<ITask>(
     verifiedComplete: { type: Boolean, default: false },
     isStale: { type: Boolean, default: false },
     hasConflict: { type: Boolean, default: false },
+    blocked: { type: Boolean, default: false },
+    blockReason: String,
     prUrl: String,
     ciStatus: { type: String, enum: ["pending", "running", "passed", "failed"] },
     position: { type: Number, default: 0 },

@@ -20,7 +20,7 @@ router.get("/", requireAuth, async (req, res) => {
   const boards = await Board.find({ organizationId: orgId }).select("_id").lean();
   const boardIds: Types.ObjectId[] = boards.map((b) => b._id as Types.ObjectId);
 
-  const [tasksByStatus, staleTasks, conflictTasks, recentActivity, memberStats] =
+  const [tasksByStatus, staleTasks, conflictTasks, blockedTasks, recentActivity, memberStats] =
     await Promise.all([
       // Task count grouped by status
       Task.aggregate([
@@ -38,6 +38,13 @@ router.get("/", requireAuth, async (req, res) => {
       // Conflict tasks
       Task.find({ boardId: { $in: boardIds }, hasConflict: true })
         .populate("boardId", "name")
+        .limit(20)
+        .lean(),
+
+      // Blocked tasks (agent flagged, needs a human)
+      Task.find({ boardId: { $in: boardIds }, blocked: true })
+        .populate("boardId", "name")
+        .sort({ updatedAt: 1 })
         .limit(20)
         .lean(),
 
@@ -81,6 +88,7 @@ router.get("/", requireAuth, async (req, res) => {
   const userMap = await fetchAuthUsers([
     ...staleTasks.map((t) => t.ownerId),
     ...conflictTasks.map((t) => t.ownerId),
+    ...blockedTasks.map((t) => t.ownerId),
     ...recentActivity.map((l) => l.userId),
   ]);
 
@@ -102,6 +110,11 @@ router.get("/", requireAuth, async (req, res) => {
       owner: serializeUser(t.ownerId, userMap),
     })),
     conflictTasks: conflictTasks.map((t) => ({
+      ...t,
+      id: String(t._id),
+      owner: serializeUser(t.ownerId, userMap),
+    })),
+    blockedTasks: blockedTasks.map((t) => ({
       ...t,
       id: String(t._id),
       owner: serializeUser(t.ownerId, userMap),

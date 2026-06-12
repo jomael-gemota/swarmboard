@@ -9,6 +9,7 @@ export interface IBoard extends Document {
   repoUrl?: string;
   repoProvider?: RepoProvider;
   webhookSecret?: string;
+  requirePrForReview?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -20,6 +21,7 @@ const BoardSchema = new Schema<IBoard>(
     repoUrl: String,
     repoProvider: { type: String, enum: ["github", "gitlab"] },
     webhookSecret: String,
+    requirePrForReview: { type: Boolean },
   },
   { timestamps: true }
 );

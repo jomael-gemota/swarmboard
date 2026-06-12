@@ -75,6 +75,8 @@ router.post("/:taskId/claim", requireAgentToken, async (req, res) => {
       ...(parsed.data.files && { declaredFiles: parsed.data.files }),
       isStale: false,
       claimedComplete: false,
+      blocked: false,
+      blockReason: null,
     },
     { new: true }
   ).lean();
@@ -173,6 +175,8 @@ router.post("/:taskId/changes", requireAgentToken, async (req, res) => {
     {
       lineRanges,
       isStale: false,
+      blocked: false,
+      blockReason: null,
       ...(filePaths.length > 0 && { $addToSet: { changedFiles: { $each: filePaths } } }),
     },
     { new: true }
@@ -254,9 +258,12 @@ router.post("/:taskId/block", requireAgentToken, async (req, res) => {
     return;
   }
 
+  // A blocker is a transient "needs a human" condition, not a workflow stage.
+  // Flag the task in place (it stays in its current column) rather than moving
+  // it to in_review, which would imply the work is reviewable.
   const updatedTask = await Task.findByIdAndUpdate(
     found.task._id,
-    { status: "in_review", isStale: false },
+    { blocked: true, blockReason: parsed.data.reason, isStale: false },
     { new: true }
   ).lean();
 
@@ -295,35 +302,54 @@ router.post("/:taskId/complete", requireAgentToken, async (req, res) => {
     return;
   }
 
+  const { task, board } = found;
+
+  // Per-board review policy: when a board requires a PR before review, an agent
+  // completing a task without a linked PR is recorded as *claimed complete* but
+  // stays in `in_progress` ("done · awaiting PR"). The authoritative move into
+  // `in_review` is the `pull_request opened` webhook, which stamps `prUrl`.
+  // Boards with no connected repo (or the policy explicitly off) trust the agent
+  // and move straight to `in_review`, as before. Default: gate when a repo is
+  // connected (`repoUrl` present).
+  const requirePr = board.requirePrForReview ?? !!board.repoUrl;
+  const awaitingPr = requirePr && !task.prUrl;
+  const newStatus = awaitingPr ? "in_progress" : "in_review";
+
   const updatedTask = await Task.findByIdAndUpdate(
-    found.task._id,
+    task._id,
     {
-      status: "in_review",
+      status: newStatus,
       claimedComplete: true,
       isStale: false,
+      blocked: false,
+      blockReason: null,
       ...(parsed.data.agentModel && { agentModel: parsed.data.agentModel }),
     },
     { new: true }
   ).lean();
 
-  const content = parsed.data.summary
-    ? `Agent marked complete: ${parsed.data.summary}`
-    : "Agent marked this task as complete (pending verification)";
+  const content = awaitingPr
+    ? parsed.data.summary
+      ? `Agent marked complete (awaiting PR before review): ${parsed.data.summary}`
+      : "Agent marked this task as complete — awaiting a PR before it moves to review"
+    : parsed.data.summary
+      ? `Agent marked complete: ${parsed.data.summary}`
+      : "Agent marked this task as complete (pending verification)";
 
   const log = await ActivityLog.create({
-    taskId: found.task._id,
+    taskId: task._id,
     userId: agentToken.userId,
     source: "agent",
     content,
-    metadata: { claimedComplete: true, agentModel: parsed.data.agentModel },
+    metadata: { claimedComplete: true, awaitingPr, agentModel: parsed.data.agentModel },
   });
 
-  const boardId = String(found.board._id);
+  const boardId = String(board._id);
   emitToBoard(boardId, "task:updated", taskJson(updatedTask as Record<string, unknown>) as never);
   emitToBoard(boardId, "activity:created", {
     ...log.toObject(),
     id: String(log._id),
-    taskId: String(found.task._id),
+    taskId: String(task._id),
   } as never);
 
   res.json({ task: updatedTask, log });
