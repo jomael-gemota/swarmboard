@@ -17,7 +17,6 @@ const CreateTaskSchema = z.object({
     .default("backlog"),
   ownerId: z.string().optional(),
   agentType: z.enum(["cursor", "claude_code", "copilot", "windsurf", "other"]).optional(),
-  modulePath: z.string().max(500).optional(),
   position: z.number().int().optional(),
 });
 
@@ -27,7 +26,6 @@ const UpdateTaskSchema = z.object({
   status: z.enum(["backlog", "in_progress", "in_review", "verified", "deployed"]).optional(),
   ownerId: z.string().nullable().optional(),
   agentType: z.enum(["cursor", "claude_code", "copilot", "windsurf", "other"]).nullable().optional(),
-  modulePath: z.string().max(500).nullable().optional(),
   declaredFiles: z.array(z.string().max(500)).max(200).optional(),
   position: z.number().int().optional(),
 });
@@ -169,7 +167,6 @@ router.patch("/:taskId", requireAuth, async (req, res) => {
 
   // Footprint or active-status changes can create/clear conflicts.
   if (
-    parsed.data.modulePath !== undefined ||
     parsed.data.declaredFiles !== undefined ||
     (parsed.data.status && parsed.data.status !== prevTask.status)
   ) {

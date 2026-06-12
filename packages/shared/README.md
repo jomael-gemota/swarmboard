@@ -90,7 +90,8 @@ const task = result.data;
 // Build a typed Agent API request body
 const body: ClaimTaskPayload = ClaimTaskPayload.parse({
   agentType: "cursor",
-  modulePath: "apps/api",
+  agentModel: "claude-opus-4.8",
+  files: ["apps/api/src/index.ts"],
 });
 ```
 

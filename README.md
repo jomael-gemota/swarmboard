@@ -180,7 +180,7 @@ Send the token as a `Bearer` header to any `/api/v1/tasks/*` endpoint:
 curl -X POST http://localhost:3001/api/v1/tasks/<taskId>/claim \
   -H "Authorization: Bearer swb_your_token_here" \
   -H "Content-Type: application/json" \
-  -d '{ "agentType": "cursor", "modulePath": "apps/api" }'
+  -d '{ "agentType": "cursor", "agentModel": "claude-opus-4.8", "files": ["apps/api/src/index.ts"] }'
 
 # Post a progress update
 curl -X POST http://localhost:3001/api/v1/tasks/<taskId>/update \

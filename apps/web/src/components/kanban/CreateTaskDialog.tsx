@@ -34,7 +34,6 @@ export default function CreateTaskDialog({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<TaskStatus>(defaultStatus);
-  const [modulePath, setModulePath] = useState("");
 
   const createMutation = useMutation({
     mutationFn: (data: Partial<Task>) => tasksApi.create(boardId, data),
@@ -48,7 +47,6 @@ export default function CreateTaskDialog({
       title: title.trim(),
       description: description.trim() || undefined,
       status,
-      modulePath: modulePath.trim() || undefined,
     });
   }
 
@@ -86,17 +84,6 @@ export default function CreateTaskDialog({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="module">Module path</Label>
-            <Input
-              id="module"
-              placeholder="e.g. packages/auth"
-              value={modulePath}
-              onChange={(e) => setModulePath(e.target.value)}
-              className="font-mono text-sm"
-            />
           </div>
 
           <div className="space-y-1.5">

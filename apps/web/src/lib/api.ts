@@ -106,6 +106,5 @@ export const dashboardApi = {
       conflictTasks: Task[];
       recentActivity: ActivityLog[];
       memberThroughput: Record<string, Record<string, number>>;
-      moduleHeatmap: Record<string, number>;
     }>(`/orgs/${orgId}/dashboard`),
 };

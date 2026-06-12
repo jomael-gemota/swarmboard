@@ -77,22 +77,6 @@ router.get("/", requireAuth, async (req, res) => {
     memberThroughput[oid][row._id.status] = row.count;
   }
 
-  // Active module heatmap
-  const activeTasks = await Task.find({
-    boardId: { $in: boardIds },
-    status: { $in: ["in_progress", "in_review"] },
-    modulePath: { $exists: true, $ne: null },
-  })
-    .select("modulePath")
-    .lean();
-
-  const moduleHeatmap: Record<string, number> = {};
-  for (const t of activeTasks) {
-    if (t.modulePath) {
-      moduleHeatmap[t.modulePath] = (moduleHeatmap[t.modulePath] ?? 0) + 1;
-    }
-  }
-
   // Look up all referenced auth users in one round-trip
   const userMap = await fetchAuthUsers([
     ...staleTasks.map((t) => t.ownerId),
@@ -124,7 +108,6 @@ router.get("/", requireAuth, async (req, res) => {
     })),
     recentActivity: filteredActivity,
     memberThroughput,
-    moduleHeatmap,
   });
 });
 

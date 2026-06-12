@@ -23,20 +23,17 @@ interface LineRange {
 }
 
 interface FootprintSource {
-  modulePath?: string | null;
   declaredFiles?: string[] | null;
   changedFiles?: string[] | null;
   lineRanges?: { file: string; start: number; end: number }[] | null;
 }
 
 /**
- * The set of normalized paths a task touches: its declared module path, the
- * files it declared at claim time, and the files actually changed by its
- * linked commits.
+ * The set of normalized paths a task touches: the files it declared at claim
+ * time, and the files actually changed by its linked commits.
  */
 export function taskFootprint(task: FootprintSource): string[] {
   const raw = [
-    ...(task.modulePath ? [task.modulePath] : []),
     ...(task.declaredFiles ?? []),
     ...(task.changedFiles ?? []),
   ];
@@ -57,10 +54,10 @@ function looksLikeFile(path: string): boolean {
  * Paths where two footprints overlap — true file-level matching.
  *
  * Two paths overlap only when they are exactly equal (the same file or the
- * same explicit module/path string), or one is an ancestor directory of the
- * other AND the descendant is a concrete file. A directory never conflicts
- * with another directory, so broad module-path declarations (e.g. `src` vs
- * `src/components`) are not flagged.
+ * same explicit path string), or one is an ancestor directory of the other AND
+ * the descendant is a concrete file. A directory never conflicts with another
+ * directory, so broad folder declarations (e.g. `src` vs `src/components`) are
+ * not flagged.
  */
 export function overlappingPaths(a: string[], b: string[]): string[] {
   const overlaps = new Set<string>();

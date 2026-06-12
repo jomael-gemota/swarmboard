@@ -87,7 +87,6 @@ router.post("/:boardId/tasks", requireAgentToken, async (req, res) => {
   const task = await Task.create({
     title: parsed.data.title,
     description: parsed.data.description,
-    modulePath: parsed.data.modulePath,
     parentId: parsed.data.parentId,
     boardId: board._id,
     status: "backlog",
@@ -136,7 +135,6 @@ router.post("/:boardId/plan", requireAgentToken, async (req, res) => {
     const parent = await Task.create({
       title: item.title,
       description: item.description,
-      modulePath: item.modulePath,
       boardId: board._id,
       status: "backlog",
       position: position++,
@@ -155,7 +153,6 @@ router.post("/:boardId/plan", requireAgentToken, async (req, res) => {
       const child = await Task.create({
         title: sub.title,
         description: sub.description,
-        modulePath: sub.modulePath,
         parentId: parent._id,
         boardId: board._id,
         status: "backlog",

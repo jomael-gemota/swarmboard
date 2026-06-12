@@ -64,7 +64,7 @@ The agent now has nine new tools available. Most agents will discover them autom
 |---|---|---|
 | `create_plan` | Lays out an agreed plan in one call — a list of tasks, each with optional independently-claimable subtasks. Use *after* the human agrees on the plan. | Creates parent/child tasks in `backlog` |
 | `create_task` | Creates a single task (optionally nested under a parent via `parent_id`). | Creates a task in `backlog` |
-| `claim_task` | Claims a task when the agent starts working on it. Records which agent (`cursor`, `claude_code`, `copilot`, `windsurf`, `other`) and which module path is being touched. | Status → `in_progress`, ownerId → token's user |
+| `claim_task` | Claims a task when the agent starts working on it. Records which agent (`cursor`, `claude_code`, `copilot`, `windsurf`, `other`), the underlying AI model, and the files being touched. | Status → `in_progress`, ownerId → token's user |
 | `update_task` | Posts a progress message to the task's activity feed — what was just done, what's next, findings, etc. | Adds an `agent`-sourced activity log entry; clears stale flag |
 | `complete_subtask` | Logs an individual step or checklist item as ✅ done or ⬜ not done. | Adds an `agent`-sourced activity entry tagged with the subtask |
 | `flag_blocker` | Reports a blocker — missing credentials, environment issues, a test the agent can't resolve, anything needing human input. | Status → `in_review`, blocker note added to feed |
