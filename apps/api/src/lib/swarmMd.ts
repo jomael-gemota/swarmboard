@@ -7,10 +7,13 @@ interface BoardLike {
 /**
  * The single line a developer adds to their existing `AGENTS.md` (or
  * `CLAUDE.md`) so any agent is pointed at the full swarmboard instructions in
- * `SWARM.md`. Kept short and imperative on purpose.
+ * `SWARM.md`. Worded to force a re-read on EVERY prompt — not just the first of
+ * a session — since most IDEs/agents will not auto-open an external file again
+ * once it appears earlier in the conversation, causing the instructions to be
+ * skipped on later turns.
  */
 export const SWARM_RULE =
-  "RULE: Before making any code changes, always read the SWARM.md file first. Do not skip this step.";
+  "RULE: SWARM.md holds mandatory workflow instructions for this repo. At the start of EVERY request — not only the first message of a session — open and read the FULL SWARM.md file again before taking any action, and follow it exactly. Re-read it every turn even if you already read it earlier in this conversation; never rely on memory, summarize, or skip this step.";
 
 /**
  * Generate the standalone `SWARM.md` for a board. The result is plain markdown a

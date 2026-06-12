@@ -414,10 +414,12 @@ export default function DocumentationPage() {
             </strong>{" "}
             A short rule —{" "}
             <span className="font-mono text-xs">
-              "Before making any code changes, always read SWARM.md first."
+              "At the start of every request, re-read the full SWARM.md and
+              follow it."
             </span>{" "}
-            — that points your agent at the full instructions. Your existing
-            file stays otherwise untouched.
+            — that points your agent at the full instructions and tells it to
+            re-read them on every turn, not just the first. Your existing file
+            stays otherwise untouched.
           </Step>
           <Step n={2}>
             <strong className="text-foreground">
