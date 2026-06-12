@@ -53,7 +53,7 @@ const server = new McpServer({
 
 server.tool(
   "claim_task",
-  "Claim a task from swarmboard when you start working on it. Call this as soon as you begin working on a task.",
+  "Claim a task from swarmboard when you start working on it. Call this as soon as you begin working on a task. On boards that require assignment, you can ONLY claim tasks assigned to your own user — claiming an unassigned task or one assigned to someone else will be rejected; ask a human to assign it to you first.",
   {
     task_id: z.string().describe("The swarmboard task ID to claim"),
     agent_type: z
@@ -276,7 +276,7 @@ server.tool(
 
 server.tool(
   "create_task",
-  "Create a single task on a swarmboard board (in backlog). Only do this once the human has agreed on the work. Optionally nest it under a parent task via parent_id to make it a subtask.",
+  "Create a single task on a swarmboard board (in backlog). Only do this once the human has agreed on the work. The task is automatically assigned to you (the user behind this token), so on assignment-gated boards you can claim it right away. Optionally nest it under a parent task via parent_id to make it a subtask.",
   {
     board_id: z.string().describe("The swarmboard board ID (found in the repo's AGENTS.md)"),
     title: z
@@ -313,7 +313,7 @@ server.tool(
 
 server.tool(
   "create_plan",
-  "Lay out an agreed plan on a swarmboard board in one call: a list of tasks, each with optional subtasks. Use this AFTER you and the human have agreed on the plan — do not author a plan unprompted. Check list_board_tasks first to avoid duplicating existing work. All items are created in backlog.",
+  "Lay out an agreed plan on a swarmboard board in one call: a list of tasks, each with optional subtasks. Use this AFTER you and the human have agreed on the plan — do not author a plan unprompted. Check list_board_tasks first to avoid duplicating existing work. All items are created in backlog. Top-level tasks are auto-assigned to you (the token user); subtasks are left unassigned so a human can distribute them across the team.",
   {
     board_id: z.string().describe("The swarmboard board ID (found in the repo's AGENTS.md)"),
     tasks: z
@@ -376,7 +376,7 @@ server.tool(
 
 server.tool(
   "list_board_tasks",
-  "List tasks on a swarmboard board so you can pick one to work on. Use the board_id from the repo's AGENTS.md. Defaults to pending (backlog) tasks. Call this at the start of a work session before claiming a task.",
+  "List tasks on a swarmboard board so you can pick one to work on. Use the board_id from the repo's AGENTS.md. Defaults to pending (backlog) tasks. Call this at the start of a work session before claiming a task. On boards that require assignment, the backlog list only includes tasks assigned to you — i.e. the ones you can actually claim.",
   {
     board_id: z.string().describe("The swarmboard board ID (found in the repo's AGENTS.md)"),
     status: z
@@ -447,7 +447,7 @@ server.tool(
 
 server.tool(
   "list_my_tasks",
-  "List your currently assigned in-progress and in-review tasks from swarmboard.",
+  "List your swarmboard work: tasks you are actively working (in-progress / in-review that you own) plus backlog tasks assigned to you that you can claim next.",
   {},
   async () => {
     try {
