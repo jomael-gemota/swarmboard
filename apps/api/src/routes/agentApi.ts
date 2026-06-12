@@ -195,13 +195,23 @@ router.post("/:taskId/changes", requireAgentToken, async (req, res) => {
     (f.ranges ?? []).map((r) => ({ file: f.path, start: r.start, end: r.end }))
   );
   const filePaths = parsed.data.files.map((f) => f.path);
+  // Only keep stats for files that reported at least one count.
+  const fileStats = parsed.data.files
+    .filter((f) => f.additions != null || f.deletions != null)
+    .map((f) => ({
+      file: f.path,
+      additions: f.additions ?? 0,
+      deletions: f.deletions ?? 0,
+    }));
 
-  // A report is a full snapshot of the current diff: replace lineRanges, and
-  // keep the cumulative changed-file list in sync for file-level fallback.
+  // A report is a full snapshot of the current diff: replace lineRanges and
+  // fileStats, and keep the cumulative changed-file list in sync for the
+  // file-level fallback.
   const updatedTask = await Task.findByIdAndUpdate(
     found.task._id,
     {
       lineRanges,
+      fileStats,
       isStale: false,
       blocked: false,
       blockReason: null,

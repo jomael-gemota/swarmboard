@@ -18,6 +18,7 @@ export interface ITask extends Document {
   declaredFiles: string[];
   changedFiles: string[];
   lineRanges: { file: string; start: number; end: number }[];
+  fileStats: { file: string; additions: number; deletions: number }[];
   claimedComplete: boolean;
   verifiedComplete: boolean;
   isStale: boolean;
@@ -53,6 +54,10 @@ const TaskSchema = new Schema<ITask>(
     changedFiles: { type: [String], default: [] },
     lineRanges: {
       type: [{ file: String, start: Number, end: Number, _id: false }],
+      default: [],
+    },
+    fileStats: {
+      type: [{ file: String, additions: Number, deletions: Number, _id: false }],
       default: [],
     },
     claimedComplete: { type: Boolean, default: false },
