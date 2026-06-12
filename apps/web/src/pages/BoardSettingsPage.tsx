@@ -82,15 +82,16 @@ export default function BoardSettingsPage() {
     enabled: !!orgId && !!boardId,
   });
 
-  const { data: agentsMd } = useQuery({
-    queryKey: ["board-agents-md", orgId, boardId],
-    queryFn: () => boardsApi.getAgentsMd(orgId!, boardId!),
+  const { data: swarmMd } = useQuery({
+    queryKey: ["board-swarm-md", orgId, boardId],
+    queryFn: () => boardsApi.getSwarmMd(orgId!, boardId!),
     enabled: !!orgId && !!boardId,
   });
 
   const [name, setName] = useState("");
   const [repoUrl, setRepoUrl] = useState("");
   const [repoProvider, setRepoProvider] = useState<"github" | "gitlab" | "none">("none");
+  const [requirePr, setRequirePr] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -100,6 +101,8 @@ export default function BoardSettingsPage() {
     setName(board.name);
     setRepoUrl(board.repoUrl ?? "");
     setRepoProvider((board.repoProvider as "github" | "gitlab") ?? "none");
+    // Effective default mirrors the API: gate on a PR when a repo is connected.
+    setRequirePr(board.requirePrForReview ?? !!board.repoUrl);
     setInitialised(true);
   }
 
@@ -109,6 +112,7 @@ export default function BoardSettingsPage() {
         name: name.trim() || undefined,
         repoUrl: repoUrl.trim() || undefined,
         repoProvider: repoProvider === "none" ? undefined : repoProvider,
+        requirePrForReview: requirePr,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["board", orgId, boardId] });
@@ -189,6 +193,35 @@ export default function BoardSettingsPage() {
             />
           </div>
 
+          <div className="flex items-start justify-between gap-4 pt-1">
+            <div className="space-y-0.5">
+              <Label htmlFor="require-pr">Require a PR before review</Label>
+              <p className="text-xs text-muted-foreground">
+                When on, an agent completing a task is marked “done · awaiting PR” and
+                stays in In Progress until a pull request is opened — only then does it
+                move to In Review. When off, completing moves it straight to In Review.
+              </p>
+            </div>
+            <button
+              id="require-pr"
+              type="button"
+              role="switch"
+              aria-checked={requirePr}
+              onClick={() => { setRequirePr((v) => !v); setDirty(true); }}
+              className={cn(
+                "relative mt-0.5 inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors",
+                requirePr ? "bg-primary" : "bg-secondary"
+              )}
+            >
+              <span
+                className={cn(
+                  "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                  requirePr ? "translate-x-4" : "translate-x-0.5"
+                )}
+              />
+            </button>
+          </div>
+
           {updateMutation.error && (
             <p className="text-sm text-destructive">{updateMutation.error.message}</p>
           )}
@@ -258,29 +291,72 @@ export default function BoardSettingsPage() {
       {/* Agent integration */}
       <section className="space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Agent integration (AGENTS.md)
+          Agent integration (SWARM.md)
         </h2>
-        <div className="bg-card border rounded-xl p-5 space-y-4 shadow-sm">
+        <div className="bg-card border rounded-xl p-5 space-y-5 shadow-sm">
           <p className="text-sm text-muted-foreground">
-            Commit this block into your repository's <code className="text-xs">AGENTS.md</code>{" "}
-            (or append it to an existing one — <code className="text-xs">CLAUDE.md</code> works for
-            Claude Code). It tells any AI agent to pull pending tasks from this board and log its
-            progress automatically. It contains the board ID only — no token — so it is safe to
-            commit.
+            Connect this repo to the board in two quick steps. Both files contain the
+            board ID only — no token — so they are safe to commit.
           </p>
 
-          {agentsMd ? (
-            <div className="relative">
-              <div className="absolute top-2 right-2 z-10">
-                <CopyButton value={agentsMd.markdown} />
-              </div>
-              <pre className="max-h-80 overflow-auto bg-secondary rounded-md p-4 text-xs font-mono whitespace-pre-wrap">
-                {agentsMd.markdown}
-              </pre>
+          {/* Step 1 — one-line rule into existing AGENTS.md */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary text-[11px] font-bold flex items-center justify-center">
+                1
+              </span>
+              <p className="text-sm font-medium">
+                Add one line to your existing <code className="text-xs">AGENTS.md</code>
+              </p>
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground italic">Generating…</p>
-          )}
+            <p className="text-xs text-muted-foreground pl-7">
+              Don't have an <code className="text-xs">AGENTS.md</code>? Create one (or use{" "}
+              <code className="text-xs">CLAUDE.md</code> for Claude Code) and paste this in.
+              This single line points any agent to the full instructions.
+            </p>
+            <div className="pl-7">
+              <div className="flex items-start gap-2 px-3 py-2 bg-secondary rounded-md">
+                <code className="flex-1 text-xs font-mono leading-relaxed whitespace-pre-wrap break-words">
+                  {swarmMd?.rule ?? "…"}
+                </code>
+                {swarmMd && (
+                  <div className="flex-shrink-0 pt-0.5">
+                    <CopyButton value={swarmMd.rule} />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Step 2 — create SWARM.md */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary text-[11px] font-bold flex items-center justify-center">
+                2
+              </span>
+              <p className="text-sm font-medium">
+                Create <code className="text-xs">SWARM.md</code> at your repo root
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground pl-7">
+              Paste the content below into a new <code className="text-xs">SWARM.md</code> file.
+              It carries this board's ID and the full agent workflow.
+            </p>
+            <div className="pl-7">
+              {swarmMd ? (
+                <div className="relative">
+                  <div className="absolute top-2 right-2 z-10">
+                    <CopyButton value={swarmMd.markdown} />
+                  </div>
+                  <pre className="max-h-80 overflow-auto bg-secondary rounded-md p-4 text-xs font-mono whitespace-pre-wrap">
+                    {swarmMd.markdown}
+                  </pre>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">Generating…</p>
+              )}
+            </div>
+          </div>
         </div>
       </section>
 

@@ -2,7 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "@swarmboard/shared";
 import { cn } from "@/lib/utils";
-import { ListTree, FileCode } from "lucide-react";
+import { ListTree, FileCode, GitPullRequest, Ban } from "lucide-react";
 
 interface TaskCardProps {
   task: Task;
@@ -41,6 +41,10 @@ export default function TaskCard({ task, meta, onClick }: TaskCardProps) {
   const isChanged = !!task.changedFiles && task.changedFiles.length > 0;
   const extraFiles = touchedFiles.length - MAX_FILES_SHOWN;
 
+  // The agent reported the work done, but the board requires a PR before review
+  // and none is linked yet — the task is held in In Progress.
+  const awaitingPr = task.status === "in_progress" && task.claimedComplete && !task.prUrl;
+
   return (
     <div
       ref={setNodeRef}
@@ -51,7 +55,8 @@ export default function TaskCard({ task, meta, onClick }: TaskCardProps) {
       className={cn(
         "group bg-card border rounded-lg px-2.5 py-2 cursor-pointer select-none",
         "hover:border-primary/50 transition-all duration-150",
-        task.hasConflict && "border-amber-500/60 bg-amber-500/5",
+        task.blocked && "border-red-500/60 bg-red-500/5",
+        task.hasConflict && !task.blocked && "border-amber-500/60 bg-amber-500/5",
         task.isStale && "border-gray-500/40 opacity-75",
         isDragging && "shadow-2xl ring-1 ring-primary/50"
       )}
@@ -71,6 +76,17 @@ export default function TaskCard({ task, meta, onClick }: TaskCardProps) {
         )}
       </div>
 
+      {/* Blocked — strongest attention signal, needs a human */}
+      {task.blocked && (
+        <div
+          className="mt-1.5 inline-flex items-center gap-1 rounded-md border border-red-500/50 bg-red-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-red-400"
+          title={task.blockReason ?? "Blocked"}
+        >
+          <Ban className="w-2.5 h-2.5" />
+          Blocked
+        </div>
+      )}
+
       {/* Files the agent touched (changed files, or declared if none reported) */}
       {hasFiles && (
         <div className="mt-1.5 space-y-0.5">
@@ -89,6 +105,14 @@ export default function TaskCard({ task, meta, onClick }: TaskCardProps) {
               +{extraFiles} more file{extraFiles > 1 ? "s" : ""}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Agent done, but held in In Progress until a PR is opened */}
+      {awaitingPr && (
+        <div className="mt-1.5 inline-flex items-center gap-1 rounded-md border border-amber-400/40 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
+          <GitPullRequest className="w-2.5 h-2.5" />
+          Done · awaiting PR
         </div>
       )}
 

@@ -33,6 +33,7 @@ import {
   CornerDownRight,
   ListTree,
   Trash2,
+  Ban,
 } from "lucide-react";
 
 interface TaskDetailDrawerProps {
@@ -214,13 +215,24 @@ export default function TaskDetailDrawer({
             )}
 
             {task.claimedComplete && !task.verifiedComplete && (
-              <span className="flex items-center gap-1 text-xs text-amber-400 border border-amber-400/40 px-2 py-0.5 rounded-md">
-                <Clock className="w-3 h-3" /> Claimed complete
-              </span>
+              task.status === "in_progress" && !task.prUrl ? (
+                <span className="flex items-center gap-1 text-xs text-amber-400 border border-amber-400/40 px-2 py-0.5 rounded-md">
+                  <GitPullRequest className="w-3 h-3" /> Done · awaiting PR
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-xs text-amber-400 border border-amber-400/40 px-2 py-0.5 rounded-md">
+                  <Clock className="w-3 h-3" /> Claimed complete
+                </span>
+              )
             )}
             {task.verifiedComplete && (
               <span className="flex items-center gap-1 text-xs text-emerald-400 border border-emerald-400/40 px-2 py-0.5 rounded-md">
                 <CheckCircle2 className="w-3 h-3" /> Verified
+              </span>
+            )}
+            {task.blocked && (
+              <span className="flex items-center gap-1 text-xs text-red-400 border border-red-500/50 bg-red-500/10 px-2 py-0.5 rounded-md">
+                <Ban className="w-3 h-3" /> Blocked
               </span>
             )}
             {task.hasConflict && (
@@ -234,6 +246,33 @@ export default function TaskDetailDrawer({
               </span>
             )}
           </div>
+
+          {/* Blocker callout — reason + unblock action */}
+          {task.blocked && (
+            <div className="rounded-lg border border-red-500/40 bg-red-500/5 p-3 space-y-2">
+              <div className="flex items-start gap-2">
+                <Ban className="w-4 h-4 text-red-400 flex-shrink-0 mt-px" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-red-400">Blocked — needs a human</p>
+                  {task.blockReason && (
+                    <p className="text-sm text-muted-foreground mt-0.5 break-words">
+                      {task.blockReason}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                onClick={() => updateMutation.mutate({ blocked: false })}
+                disabled={updateMutation.isPending}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                Clear blocker
+              </Button>
+            </div>
+          )}
 
           {/* Meta fields */}
           <div className="grid grid-cols-2 gap-4">

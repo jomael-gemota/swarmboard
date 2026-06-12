@@ -62,8 +62,8 @@ export const boardsApi = {
     }),
   delete: (orgId: string, boardId: string) =>
     request<void>(`/orgs/${orgId}/boards/${boardId}`, { method: "DELETE" }),
-  getAgentsMd: (orgId: string, boardId: string) =>
-    request<{ markdown: string }>(`/orgs/${orgId}/boards/${boardId}/agents-md`),
+  getSwarmMd: (orgId: string, boardId: string) =>
+    request<{ markdown: string; rule: string }>(`/orgs/${orgId}/boards/${boardId}/swarm-md`),
 };
 
 // ─── Tasks ────────────────────────────────────────────────────────────────────
@@ -104,6 +104,7 @@ export const dashboardApi = {
       tasksByStatus: { status: string; _count: number }[];
       staleTasks: Task[];
       conflictTasks: Task[];
+      blockedTasks: Task[];
       recentActivity: ActivityLog[];
       memberThroughput: Record<string, Record<string, number>>;
     }>(`/orgs/${orgId}/dashboard`),

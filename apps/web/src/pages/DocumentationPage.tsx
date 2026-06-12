@@ -393,7 +393,7 @@ export default function DocumentationPage() {
           </p>
         </div>
 
-        {/* Step 3: AGENTS.md */}
+        {/* Step 3: SWARM.md + AGENTS.md pointer */}
         <div className="pt-3">
           <div className="flex items-center gap-2 mb-2">
             <GitBranch className="w-4 h-4 text-muted-foreground" />
@@ -401,17 +401,33 @@ export default function DocumentationPage() {
               Step 3 — Let agents find their own work
             </h3>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-3">
             Open a board's{" "}
-            <strong className="text-foreground">
-              ⚙ settings → Agent integration
-            </strong>{" "}
-            and copy the generated{" "}
-            <span className="font-mono text-xs">AGENTS.md</span> block into
-            your repo. It carries the board ID (no secret — safe to commit)
-            plus workflow instructions, so any agent reading it can pick up
-            pending tasks automatically.
+            <strong className="text-foreground">⚙ settings → Agent integration</strong>{" "}
+            and follow the two steps there. Both files carry the board ID only
+            (no secret — safe to commit):
           </p>
+          <Step n={1}>
+            <strong className="text-foreground">
+              Add one line to your existing{" "}
+              <span className="font-mono text-xs">AGENTS.md</span>.
+            </strong>{" "}
+            A short rule —{" "}
+            <span className="font-mono text-xs">
+              "Before making any code changes, always read SWARM.md first."
+            </span>{" "}
+            — that points your agent at the full instructions. Your existing
+            file stays otherwise untouched.
+          </Step>
+          <Step n={2}>
+            <strong className="text-foreground">
+              Create a <span className="font-mono text-xs">SWARM.md</span> file
+              at your repo root
+            </strong>{" "}
+            and paste in the generated content. It holds the board ID and the
+            full agent workflow, so any agent that reads it can pick up pending
+            tasks automatically.
+          </Step>
         </div>
 
         {/* Agent loop */}
@@ -427,10 +443,15 @@ export default function DocumentationPage() {
             Post progress updates and tick off subtasks as it works.
           </Step>
           <Step n={3}>
-            Flag a blocker if it gets stuck → moves to In Review.
+            Flag a blocker if it gets stuck → the card is marked{" "}
+            <strong className="text-foreground">Blocked</strong> in place and
+            you're alerted. It clears automatically when the agent resumes.
           </Step>
           <Step n={4}>
-            Mark complete when done → moves to In Review, claimed complete.
+            Mark complete when done → claimed complete. Moves to In Review, or
+            stays in In Progress as{" "}
+            <strong className="text-foreground">"awaiting PR"</strong> on boards
+            that require a pull request before review.
           </Step>
           <Step n={5}>
             You review, verify, and move it to Verified / Deployed.
