@@ -10,12 +10,12 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import type { Task, TaskStatus } from "@swarmboard/shared";
-import { tasksApi, boardsApi } from "@/lib/api";
+import { tasksApi, boardsApi, orgsApi } from "@/lib/api";
 import { getSocket } from "@/lib/socket";
 import KanbanColumn from "@/components/kanban/KanbanColumn";
 import TaskDetailDrawer from "@/components/kanban/TaskDetailDrawer";
 import CreateTaskDialog from "@/components/kanban/CreateTaskDialog";
-import { STATUS_LABELS, subtaskProgress } from "@/lib/utils";
+import { subtaskProgress } from "@/lib/utils";
 import { Loader2, Wifi, WifiOff, Settings } from "lucide-react";
 
 const STATUSES: TaskStatus[] = ["backlog", "in_progress", "in_review", "verified", "deployed"];
@@ -38,6 +38,20 @@ export default function BoardPage() {
     queryFn: () => tasksApi.list(boardId!),
     enabled: !!boardId,
   });
+
+  // Org members power the assignee picker on the create dialog and detail drawer.
+  const { data: org } = useQuery({
+    queryKey: ["org", orgId],
+    queryFn: () => orgsApi.get(orgId!),
+    enabled: !!orgId,
+  });
+  const members = (org?.members ?? [])
+    .filter((m) => m.user)
+    .map((m) => ({
+      id: m.user!.id,
+      name: m.user!.name ?? null,
+      email: m.user!.email ?? null,
+    }));
 
   const updateMutation = useMutation({
     mutationFn: ({ taskId, data }: { taskId: string; data: Partial<Task> }) =>
@@ -234,6 +248,7 @@ export default function BoardPage() {
           task={selectedTask}
           boardId={boardId}
           allTasks={tasks}
+          members={members}
           onTaskClick={setSelectedTask}
           onClose={() => setSelectedTask(null)}
         />
@@ -244,6 +259,7 @@ export default function BoardPage() {
         <CreateTaskDialog
           boardId={boardId}
           defaultStatus={createStatus}
+          members={members}
           onClose={() => setCreateStatus(null)}
           onCreated={(task) => {
             queryClient.setQueryData<Task[]>(["tasks", boardId], (old) => [

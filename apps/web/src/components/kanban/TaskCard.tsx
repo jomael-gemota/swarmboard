@@ -66,14 +66,27 @@ export default function TaskCard({ task, meta, onClick }: TaskCardProps) {
         <p className="text-xs font-medium leading-snug group-hover:text-primary transition-colors line-clamp-2 min-w-0">
           {task.title}
         </p>
-        {task.owner && (
-          <div
-            className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold text-primary flex-shrink-0"
-            title={task.owner.name}
-          >
-            {task.owner.name[0]?.toUpperCase()}
-          </div>
-        )}
+        {(() => {
+          // Prefer the active owner; before a claim, fall back to the assignee
+          // (who the task is reserved for) shown as a dimmed avatar.
+          const person = task.owner ?? task.assignee;
+          if (!person) return null;
+          const label = person.name ?? person.email ?? "?";
+          const isOwner = !!task.owner;
+          return (
+            <div
+              className={cn(
+                "w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0",
+                isOwner
+                  ? "bg-primary/20 text-primary"
+                  : "bg-muted text-muted-foreground ring-1 ring-border"
+              )}
+              title={isOwner ? label : `Assigned to ${label}`}
+            >
+              {label[0]?.toUpperCase()}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Blocked — strongest attention signal, needs a human */}

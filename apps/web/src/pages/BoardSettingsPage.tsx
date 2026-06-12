@@ -92,6 +92,7 @@ export default function BoardSettingsPage() {
   const [repoUrl, setRepoUrl] = useState("");
   const [repoProvider, setRepoProvider] = useState<"github" | "gitlab" | "none">("none");
   const [requirePr, setRequirePr] = useState(false);
+  const [requireAssignee, setRequireAssignee] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -103,6 +104,7 @@ export default function BoardSettingsPage() {
     setRepoProvider((board.repoProvider as "github" | "gitlab") ?? "none");
     // Effective default mirrors the API: gate on a PR when a repo is connected.
     setRequirePr(board.requirePrForReview ?? !!board.repoUrl);
+    setRequireAssignee(board.requireAssigneeToClaim ?? false);
     setInitialised(true);
   }
 
@@ -113,6 +115,7 @@ export default function BoardSettingsPage() {
         repoUrl: repoUrl.trim() || undefined,
         repoProvider: repoProvider === "none" ? undefined : repoProvider,
         requirePrForReview: requirePr,
+        requireAssigneeToClaim: requireAssignee,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["board", orgId, boardId] });
@@ -217,6 +220,37 @@ export default function BoardSettingsPage() {
                 className={cn(
                   "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
                   requirePr ? "translate-x-4" : "translate-x-0.5"
+                )}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-start justify-between gap-4 pt-1">
+            <div className="space-y-0.5">
+              <Label htmlFor="require-assignee">Require assignment before an agent can claim</Label>
+              <p className="text-xs text-muted-foreground">
+                When on, an agent can only claim tasks assigned to its own user, and unassigned
+                tasks can't be claimed at all — useful when multiple developers share this board, so
+                one developer's agent never picks up another's work. Tasks an agent creates are
+                auto-assigned to that agent's user. When off, any agent in the workspace can claim
+                any backlog task.
+              </p>
+            </div>
+            <button
+              id="require-assignee"
+              type="button"
+              role="switch"
+              aria-checked={requireAssignee}
+              onClick={() => { setRequireAssignee((v) => !v); setDirty(true); }}
+              className={cn(
+                "relative mt-0.5 inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors",
+                requireAssignee ? "bg-primary" : "bg-secondary"
+              )}
+            >
+              <span
+                className={cn(
+                  "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                  requireAssignee ? "translate-x-4" : "translate-x-0.5"
                 )}
               />
             </button>

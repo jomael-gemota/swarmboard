@@ -439,7 +439,12 @@ export default function DocumentationPage() {
             <h3 className="font-semibold text-foreground">The agent's loop</h3>
           </div>
           <Step n={1}>
-            Pick a task from Backlog and claim it → moves to In Progress.
+            Pick a task from Backlog and claim it → moves to In Progress. On
+            boards with{" "}
+            <strong className="text-foreground">require assignment</strong>{" "}
+            turned on (⚙ settings), an agent can only claim tasks assigned to its
+            own user, so multiple developers can share a board without their
+            agents stealing each other's work.
           </Step>
           <Step n={2}>
             Post progress updates and tick off subtasks as it works.

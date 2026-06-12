@@ -16,24 +16,38 @@ import {
 } from "@/components/ui/dialog";
 import { STATUS_LABELS } from "@/lib/utils";
 
+export interface BoardMember {
+  id: string;
+  name: string | null;
+  email: string | null;
+}
+
 interface CreateTaskDialogProps {
   boardId: string;
   defaultStatus: TaskStatus;
+  members?: BoardMember[];
   onClose: () => void;
   onCreated: (task: Task) => void;
 }
 
 const STATUSES: TaskStatus[] = ["backlog", "in_progress", "in_review", "verified", "deployed"];
+const UNASSIGNED = "__unassigned__";
+
+export function memberLabel(m: BoardMember): string {
+  return m.name ?? m.email ?? m.id;
+}
 
 export default function CreateTaskDialog({
   boardId,
   defaultStatus,
+  members = [],
   onClose,
   onCreated,
 }: CreateTaskDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<TaskStatus>(defaultStatus);
+  const [assigneeId, setAssigneeId] = useState<string>(UNASSIGNED);
 
   const createMutation = useMutation({
     mutationFn: (data: Partial<Task>) => tasksApi.create(boardId, data),
@@ -47,6 +61,7 @@ export default function CreateTaskDialog({
       title: title.trim(),
       description: description.trim() || undefined,
       status,
+      assigneeId: assigneeId === UNASSIGNED ? null : assigneeId,
     });
   }
 
@@ -87,6 +102,27 @@ export default function CreateTaskDialog({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="assignee">Assignee</Label>
+            <Select value={assigneeId} onValueChange={setAssigneeId}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                {members.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {memberLabel(m)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              On boards that require assignment, agents can only claim tasks assigned to their user.
+              Unassigned tasks can't be claimed by an agent.
+            </p>
           </div>
 
           <div className="space-y-1.5">

@@ -33,7 +33,13 @@ export const orgsApi = {
   create: (data: { name: string; slug: string }) =>
     request<Organization>("/orgs", { method: "POST", body: JSON.stringify(data) }),
   get: (orgId: string) =>
-    request<Organization & { members: (Member & { user: { name: string; email: string; image?: string } })[] }>(`/orgs/${orgId}`),
+    request<
+      Organization & {
+        members: (Member & {
+          user: { id: string; name: string | null; email: string | null; image?: string };
+        })[];
+      }
+    >(`/orgs/${orgId}`),
   delete: (orgId: string) =>
     request<void>(`/orgs/${orgId}`, { method: "DELETE" }),
   inviteMember: (orgId: string, data: { email: string; role: string }) =>

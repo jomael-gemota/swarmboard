@@ -17,6 +17,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import ActivityFeed from "./ActivityFeed";
+import type { BoardMember } from "./CreateTaskDialog";
+import { memberLabel } from "./CreateTaskDialog";
 import { STATUS_LABELS, STATUS_COLORS, AGENT_LABELS, cn, formatDate, subtaskProgress } from "@/lib/utils";
 import {
   X,
@@ -40,14 +42,18 @@ interface TaskDetailDrawerProps {
   task: Task;
   boardId: string;
   allTasks?: Task[];
+  members?: BoardMember[];
   onTaskClick?: (task: Task) => void;
   onClose: () => void;
 }
+
+const UNASSIGNED = "__unassigned__";
 
 export default function TaskDetailDrawer({
   task,
   boardId,
   allTasks = [],
+  members = [],
   onTaskClick,
   onClose,
 }: TaskDetailDrawerProps) {
@@ -294,8 +300,43 @@ export default function TaskDetailDrawer({
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Owner</Label>
-              <div className="text-sm">{task.owner?.name ?? "Unassigned"}</div>
+              <div className="text-sm">{task.owner?.name ?? "—"}</div>
             </div>
+          </div>
+
+          {/* Assignee — who the task is reserved for (gates agent claims) */}
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Assignee</Label>
+            <Select
+              value={task.assigneeId ?? UNASSIGNED}
+              onValueChange={(v) =>
+                updateMutation.mutate({ assigneeId: v === UNASSIGNED ? null : v })
+              }
+              disabled={updateMutation.isPending}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="Unassigned" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                {members.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {memberLabel(m)}
+                  </SelectItem>
+                ))}
+                {/* Keep the current assignee selectable even if not in the member list */}
+                {task.assignee &&
+                  !members.some((m) => m.id === task.assigneeId) &&
+                  task.assigneeId && (
+                    <SelectItem value={task.assigneeId}>
+                      {task.assignee.name ?? task.assignee.email ?? task.assigneeId}
+                    </SelectItem>
+                  )}
+              </SelectContent>
+            </Select>
+            {updateMutation.error && (
+              <p className="mt-1 text-xs text-destructive">{updateMutation.error.message}</p>
+            )}
           </div>
 
           {/* Files touched (declared at claim time + changed via Git) */}
