@@ -204,7 +204,7 @@ server.tool(
 
 server.tool(
   "flag_blocker",
-  "Flag a blocker on a swarmboard task. Use this when you are stuck, need human input, or cannot proceed without external action.",
+  "Flag a blocker on a swarmboard task. Use this when you are stuck, need human input, or cannot proceed without external action. This marks the task as 'blocked' in place (it stays in its current column, it is NOT moved to review) and alerts a human. The blocked flag clears automatically when you resume — claim the task again, report changes, or complete it.",
   {
     task_id: z.string().describe("The swarmboard task ID"),
     reason: z
@@ -235,7 +235,7 @@ server.tool(
 
 server.tool(
   "complete_task",
-  "Mark a swarmboard task as complete. Call this when you believe the task is fully done. Note: this marks it as 'claimed complete' — a human or CI verification step will confirm it as 'verified'.",
+  "Mark a swarmboard task as complete. Call this when you believe the task is fully done. Note: this marks it as 'claimed complete' — a human or CI verification step will confirm it as 'verified'. On boards that require a PR before review, the task stays in 'in_progress' (marked 'done, awaiting PR') until you open a pull request that references the task ID ([TASK-<id>] or #swb-<id>); opening that PR moves it to 'in_review'.",
   {
     task_id: z.string().describe("The swarmboard task ID"),
     summary: z
@@ -253,14 +253,17 @@ server.tool(
   },
   async ({ task_id, summary, agent_model }) => {
     try {
-      await callApi(`/tasks/${task_id}/complete`, "POST", { summary, agentModel: agent_model });
+      const result = (await callApi(`/tasks/${task_id}/complete`, "POST", {
+        summary,
+        agentModel: agent_model,
+      })) as { task?: { status?: string } };
+      const status = result.task?.status;
+      const text =
+        status === "in_progress"
+          ? `Task ${task_id} marked complete, but this board requires a PR before review — it stays in progress ("done, awaiting PR"). Open a pull request referencing the task ([TASK-${task_id}] or #swb-${task_id}) to move it to review.`
+          : `Task ${task_id} marked as complete (claimed). Awaiting verification.`;
       return {
-        content: [
-          {
-            type: "text",
-            text: `Task ${task_id} marked as complete (claimed). Awaiting verification.`,
-          },
-        ],
+        content: [{ type: "text", text }],
       };
     } catch (err) {
       return {
