@@ -125,13 +125,25 @@ server.tool(
 
 server.tool(
   "report_changes",
-  "Report the files and line ranges you have changed on a task (from `git diff`), so swarmboard can flag line-level conflicts with other agents touching the same lines. Call this after making edits and whenever your diff changes; each call replaces the previously reported set with your current full diff.",
+  "Report the files you have changed on a task (from `git diff`/`git diff --numstat`): line ranges power line-level conflict detection, and the optional per-file additions/deletions counts are shown as `+adds / -dels` in the task's Files touched list. Call this after making edits and whenever your diff changes; each call replaces the previously reported set with your current full diff.",
   {
     task_id: z.string().describe("The swarmboard task ID"),
     files: z
       .array(
         z.object({
           path: z.string().describe("Repo-relative file path (e.g. apps/api/src/routes/tasks.ts)"),
+          additions: z
+            .number()
+            .int()
+            .min(0)
+            .optional()
+            .describe("Lines added in this file (from `git diff --numstat`). Optional."),
+          deletions: z
+            .number()
+            .int()
+            .min(0)
+            .optional()
+            .describe("Lines removed in this file (from `git diff --numstat`). Optional."),
           ranges: z
             .array(
               z.object({
