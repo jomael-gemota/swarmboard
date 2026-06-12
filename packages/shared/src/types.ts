@@ -62,6 +62,7 @@ export const BoardSchema = z.object({
   repoProvider: z.enum(["github", "gitlab"]).nullable().optional(),
   webhookSecret: z.string().nullable().optional(),
   requirePrForReview: z.boolean().nullable().optional(),
+  requireAssigneeToClaim: z.boolean().nullable().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -75,6 +76,7 @@ export const TaskSchema = z.object({
   boardId: z.string(),
   parentId: z.string().nullable().optional(),
   ownerId: z.string().nullable(),
+  assigneeId: z.string().nullable().optional(),
   agentType: AgentType.nullable(),
   agentModel: z.string().nullable().optional(),
   declaredFiles: z.array(z.string()).optional(),
@@ -94,6 +96,7 @@ export const TaskSchema = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   owner: UserSchema.optional(),
+  assignee: UserSchema.optional(),
 });
 export type Task = z.infer<typeof TaskSchema>;
 
