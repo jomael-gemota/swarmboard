@@ -61,6 +61,7 @@ export const BoardSchema = z.object({
   repoUrl: z.string().nullable().optional(),
   repoProvider: z.enum(["github", "gitlab"]).nullable().optional(),
   webhookSecret: z.string().nullable().optional(),
+  requirePrForReview: z.boolean().nullable().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -85,6 +86,8 @@ export const TaskSchema = z.object({
   verifiedComplete: z.boolean(),
   isStale: z.boolean(),
   hasConflict: z.boolean(),
+  blocked: z.boolean(),
+  blockReason: z.string().nullable().optional(),
   prUrl: z.string().nullable(),
   ciStatus: z.enum(["pending", "running", "passed", "failed"]).nullable(),
   position: z.number(),
