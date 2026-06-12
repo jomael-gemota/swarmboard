@@ -279,7 +279,11 @@ server.tool(
   "Create a single task on a swarmboard board (in backlog). Only do this once the human has agreed on the work. Optionally nest it under a parent task via parent_id to make it a subtask.",
   {
     board_id: z.string().describe("The swarmboard board ID (found in the repo's AGENTS.md)"),
-    title: z.string().describe("Short, action-oriented task title"),
+    title: z
+      .string()
+      .describe(
+        "Task title. Follow the 'Task title format' defined in the repo's SWARM.md (it is the source of truth and may be customized per repo). Default if SWARM.md is unavailable: '[Type]: Action + object + context' where Type is one of Feature, Bug, Chore, Docs, Refactor — e.g. '[Feature]: Add OAuth login to settings page'."
+      ),
     description: z.string().optional().describe("What the task involves and any acceptance criteria"),
     parent_id: z
       .string()
@@ -315,12 +319,20 @@ server.tool(
     tasks: z
       .array(
         z.object({
-          title: z.string().describe("Short, action-oriented task title"),
+          title: z
+            .string()
+            .describe(
+              "Task title. Follow the 'Task title format' defined in the repo's SWARM.md (source of truth, customizable per repo). Default: '[Type]: Action + object + context' where Type is one of Feature, Bug, Chore, Docs, Refactor — e.g. '[Feature]: Add OAuth login to settings page'."
+            ),
           description: z.string().optional().describe("What the task involves"),
           subtasks: z
             .array(
               z.object({
-                title: z.string().describe("Subtask title"),
+                title: z
+                  .string()
+                  .describe(
+                    "Subtask title. Follow the same 'Task title format' as tasks (see the repo's SWARM.md). Default convention: '[Type]: Action + object + context'."
+                  ),
                 description: z.string().optional(),
               })
             )

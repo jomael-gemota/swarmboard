@@ -45,7 +45,8 @@ swarmboard MCP tools available — use them so the board reflects your work.
    on the plan, call \`create_plan\` with \`board_id: "${boardId}"\` to lay it
    out as tasks (each with optional subtasks) before you start building. Do not
    author a plan unprompted, and don't duplicate tasks that already exist. You
-   can also add a single task with \`create_task\`.
+   can also add a single task with \`create_task\`. Name every task and subtask
+   using the **Task title format** defined below.
 3. Pick the task you are going to work on and call \`claim_task\` with its
    \`task_id\`. This moves it to \`in_progress\`. Include \`agent_type\` (your
    IDE/tool) and \`agent_model\` (the AI model you are running as, e.g.
@@ -83,6 +84,22 @@ swarmboard MCP tools available — use them so the board reflects your work.
   review, \`complete_task\` keeps the task *in progress* and marked
   "done · awaiting PR" until that PR is opened — opening the PR is what moves it
   to \`in_review\`.
+
+## Task title format
+
+> **Maintainers: edit this section to set the title convention for this repo.**
+> Agents must follow whatever format is written here. The default below is a
+> sensible starting point — change it freely to match your team's style.
+
+**Default format:** \`[Type]: Action + object + context\`
+
+- **Type** — one of \`Feature\`, \`Bug\`, \`Chore\`, \`Docs\`, \`Refactor\`
+  (Capitalized, in brackets).
+- **Action** — imperative, sentence case, concise (≤ ~70 chars), no trailing
+  period.
+- **Example:** \`[Feature]: Add OAuth login to settings page\`
+
+Apply the same convention to subtasks.
 
 If you do not yet have a task ID and \`list_board_tasks\` returns nothing, ask
 the human which task to work on rather than guessing.

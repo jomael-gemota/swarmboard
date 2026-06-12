@@ -62,12 +62,15 @@ export default function CreateTaskDialog({
             <Label htmlFor="title">Title</Label>
             <Input
               id="title"
-              placeholder="Task title"
+              placeholder="[Feature]: Add OAuth login to settings page"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
               autoFocus
             />
+            <p className="text-xs text-muted-foreground">
+              Format: [Type]: Action + object + context. Type ∈ Feature, Bug, Chore, Docs, Refactor.
+            </p>
           </div>
 
           <div className="space-y-1.5">
