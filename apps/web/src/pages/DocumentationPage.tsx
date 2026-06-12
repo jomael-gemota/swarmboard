@@ -11,7 +11,6 @@ import {
   ListChecks,
   Copy,
   Check,
-  Terminal,
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -224,161 +223,6 @@ function CodeBlock({
   );
 }
 
-// ─── API Endpoint Doc ─────────────────────────────────────────────────────────
-
-type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-
-interface ParamDef {
-  name: string;
-  type: string;
-  required?: boolean;
-  description: string;
-}
-
-interface EndpointDef {
-  method: HttpMethod;
-  path: string;
-  description: string;
-  params?: ParamDef[];
-}
-
-const METHOD_STYLES: Record<HttpMethod, { badge: string; border: string }> = {
-  GET: {
-    badge: "bg-sky-500/15 text-sky-400 border border-sky-500/30",
-    border: "border-l-sky-500/50",
-  },
-  POST: {
-    badge: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
-    border: "border-l-emerald-500/50",
-  },
-  PUT: {
-    badge: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
-    border: "border-l-amber-500/50",
-  },
-  PATCH: {
-    badge: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
-    border: "border-l-amber-500/50",
-  },
-  DELETE: {
-    badge: "bg-red-500/15 text-red-400 border border-red-500/30",
-    border: "border-l-red-500/50",
-  },
-};
-
-function ApiEndpointRow({ endpoint }: { endpoint: EndpointDef }) {
-  const [open, setOpen] = useState(false);
-  const styles = METHOD_STYLES[endpoint.method];
-
-  const pathParts = endpoint.path.split(/(:[\w]+)/g);
-
-  return (
-    <div
-      className={cn(
-        "border border-border/60 rounded-lg overflow-hidden transition-colors",
-        open && "border-border"
-      )}
-    >
-      <button
-        className={cn(
-          "w-full flex items-center gap-3 px-4 py-3 text-left bg-card hover:bg-secondary/40 transition-colors border-l-2",
-          styles.border
-        )}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span
-          className={cn(
-            "flex-shrink-0 inline-flex items-center rounded px-2 py-0.5 text-xs font-bold font-mono w-14 justify-center",
-            styles.badge
-          )}
-        >
-          {endpoint.method}
-        </span>
-        <span className="flex-1 text-xs font-mono text-foreground/90">
-          {pathParts.map((part, i) =>
-            part.startsWith(":") ? (
-              <span key={i} className="text-amber-400">
-                {part}
-              </span>
-            ) : (
-              <span key={i}>{part}</span>
-            )
-          )}
-        </span>
-        <span className="text-xs text-muted-foreground hidden sm:block">
-          {endpoint.description}
-        </span>
-        <svg
-          className={cn(
-            "w-3.5 h-3.5 text-muted-foreground flex-shrink-0 transition-transform duration-150",
-            open && "rotate-180"
-          )}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
-      </button>
-
-      {open && (
-        <div className="px-4 pt-3 pb-4 bg-secondary/20 border-t border-border/50 space-y-3">
-          <p className="text-sm text-muted-foreground">{endpoint.description}</p>
-          {endpoint.params && endpoint.params.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Request Body
-              </p>
-              <div className="rounded-md border border-border/60 overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="bg-secondary/60 border-b border-border/60">
-                      <th className="text-left px-3 py-2 font-semibold text-muted-foreground">
-                        Field
-                      </th>
-                      <th className="text-left px-3 py-2 font-semibold text-muted-foreground">
-                        Type
-                      </th>
-                      <th className="text-left px-3 py-2 font-semibold text-muted-foreground">
-                        Required
-                      </th>
-                      <th className="text-left px-3 py-2 font-semibold text-muted-foreground">
-                        Description
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {endpoint.params.map((p, i) => (
-                      <tr
-                        key={p.name}
-                        className={cn(
-                          "border-b border-border/40 last:border-0",
-                          i % 2 === 0 ? "bg-transparent" : "bg-secondary/20"
-                        )}
-                      >
-                        <td className="px-3 py-2 font-mono text-sky-400">{p.name}</td>
-                        <td className="px-3 py-2 font-mono text-amber-400">{p.type}</td>
-                        <td className="px-3 py-2">
-                          {p.required ? (
-                            <span className="text-emerald-400 font-medium">yes</span>
-                          ) : (
-                            <span className="text-zinc-500">no</span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2 text-muted-foreground">{p.description}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── Shared layout helpers ────────────────────────────────────────────────────
 
 function Section({
@@ -424,118 +268,8 @@ function Step({ n, children }: { n: number; children: React.ReactNode }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-const API_ENDPOINTS: EndpointDef[] = [
-  {
-    method: "POST",
-    path: "/api/v1/tasks/:id/claim",
-    description: "Claim a task and start working on it. Moves it to In Progress.",
-    params: [
-      {
-        name: "agentType",
-        type: "string",
-        required: true,
-        description: 'The agent doing the work, e.g. "cursor", "claude-code", "windsurf".',
-      },
-      {
-        name: "modulePath",
-        type: "string",
-        required: false,
-        description: "The repo sub-path this agent is working in (optional context).",
-      },
-    ],
-  },
-  {
-    method: "POST",
-    path: "/api/v1/tasks/:id/update",
-    description: "Post a progress message to the task's activity log.",
-    params: [
-      {
-        name: "message",
-        type: "string",
-        required: true,
-        description: "A short human-readable progress note.",
-      },
-    ],
-  },
-  {
-    method: "POST",
-    path: "/api/v1/tasks/:id/subtask",
-    description: "Log a completed subtask step inside the task.",
-    params: [
-      {
-        name: "title",
-        type: "string",
-        required: true,
-        description: "Label for the subtask step.",
-      },
-      {
-        name: "done",
-        type: "boolean",
-        required: false,
-        description: "Mark the subtask as complete (defaults to true).",
-      },
-    ],
-  },
-  {
-    method: "POST",
-    path: "/api/v1/tasks/:id/block",
-    description: "Flag a blocker. Moves the task to In Review so a human can unblock it.",
-    params: [
-      {
-        name: "reason",
-        type: "string",
-        required: true,
-        description: "Describe what is blocking progress.",
-      },
-    ],
-  },
-  {
-    method: "POST",
-    path: "/api/v1/tasks/:id/complete",
-    description:
-      "Mark a task as claimed complete. Moves it to In Review pending human verification.",
-    params: [
-      {
-        name: "summary",
-        type: "string",
-        required: true,
-        description: "A brief summary of what was done.",
-      },
-    ],
-  },
-  {
-    method: "GET",
-    path: "/api/v1/tasks",
-    description: "List all tasks currently claimed by this token's agent.",
-  },
-  {
-    method: "GET",
-    path: "/api/v1/boards/:boardId/tasks",
-    description: "List all tasks on a specific board.",
-  },
-  {
-    method: "POST",
-    path: "/api/v1/boards/:boardId/plan",
-    description: "Submit a structured plan for a board (creates tasks from an agent-generated plan).",
-    params: [
-      {
-        name: "tasks",
-        type: "object[]",
-        required: true,
-        description: "Array of task objects with title, description, and optional subtasks.",
-      },
-    ],
-  },
-];
-
 export default function DocumentationPage() {
   const { orgId } = useParams<{ orgId: string }>();
-
-  const apiBase =
-    import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
-    (window.location.origin.includes("5173")
-      ? "http://localhost:3001"
-      : window.location.origin);
 
   const mcpConfig = `{
   "mcpServers": {
@@ -548,24 +282,6 @@ export default function DocumentationPage() {
     }
   }
 }`;
-
-  const restExample = `# Claim a task
-curl -X POST ${apiBase}/api/v1/tasks/<taskId>/claim \\
-  -H "Authorization: Bearer swb_your_token_here" \\
-  -H "Content-Type: application/json" \\
-  -d '{ "agentType": "cursor", "modulePath": "apps/api" }'
-
-# Post a progress update
-curl -X POST ${apiBase}/api/v1/tasks/<taskId>/update \\
-  -H "Authorization: Bearer swb_your_token_here" \\
-  -H "Content-Type: application/json" \\
-  -d '{ "message": "Refactored auth, all tests passing" }'
-
-# Mark complete (pending verification)
-curl -X POST ${apiBase}/api/v1/tasks/<taskId>/complete \\
-  -H "Authorization: Bearer swb_your_token_here" \\
-  -H "Content-Type: application/json" \\
-  -d '{ "summary": "Implemented OAuth login, 12 tests passing" }'`;
 
   return (
     <div className="page-shell page-content space-y-7">
@@ -604,7 +320,7 @@ curl -X POST ${apiBase}/api/v1/tasks/<taskId>/complete \\
       <Section
         icon={<Bot className="w-5 h-5" />}
         title="Letting AI agents do the work"
-        subtitle="The primary workflow — agents connect over an API and drive the board autonomously."
+        subtitle="The primary workflow — agents connect via MCP and drive the board autonomously."
         badge={
           <span className="inline-flex items-center gap-1 rounded-md bg-primary/15 text-primary px-2 py-0.5 text-xs font-semibold">
             <Zap className="w-3 h-3" />
@@ -651,7 +367,7 @@ curl -X POST ${apiBase}/api/v1/tasks/<taskId>/complete \\
             <h3 className="font-semibold text-foreground">
               Step 2 — Connect via MCP{" "}
               <span className="text-xs font-normal text-muted-foreground ml-1">
-                (recommended for Cursor, Claude Code, Windsurf)
+                (Cursor, Claude Code, Windsurf, and any MCP-compatible agent)
               </span>
             </h3>
           </div>
@@ -719,60 +435,6 @@ curl -X POST ${apiBase}/api/v1/tasks/<taskId>/complete \\
           <Step n={5}>
             You review, verify, and move it to Verified / Deployed.
           </Step>
-        </div>
-      </Section>
-
-      {/* ── REST API ── */}
-      <Section
-        icon={<Terminal className="w-5 h-5" />}
-        title="REST API"
-        subtitle="Use the same agent token from any script, CI pipeline, or process."
-      >
-        <p className="text-muted-foreground">
-          Send the token as a{" "}
-          <span className="font-mono text-xs">Bearer</span> header to the{" "}
-          <span className="font-mono text-xs">/api/v1</span> endpoints. The
-          base URL for this instance is{" "}
-          <span className="font-mono text-xs">{apiBase}</span>.
-        </p>
-
-        {/* Quick-start example */}
-        <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            Quick-start examples
-          </p>
-          <CodeBlock filename="bash" lang="bash" code={restExample} />
-        </div>
-
-        {/* Endpoint reference */}
-        <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 mt-2">
-            Endpoint reference{" "}
-            <span className="normal-case font-normal text-muted-foreground/60">
-              — click any row to expand
-            </span>
-          </p>
-          <div className="space-y-2">
-            {API_ENDPOINTS.map((ep) => (
-              <ApiEndpointRow
-                key={`${ep.method}-${ep.path}`}
-                endpoint={ep}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-lg bg-secondary/40 border p-3.5 flex gap-2.5">
-          <Key className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-          <p className="text-muted-foreground text-xs">
-            <strong className="text-foreground">Authentication.</strong> All
-            endpoints require{" "}
-            <span className="font-mono">
-              Authorization: Bearer swb_your_token_here
-            </span>
-            . Tokens are scoped to an organization and created on the Agent
-            Tokens page.
-          </p>
         </div>
       </Section>
 
