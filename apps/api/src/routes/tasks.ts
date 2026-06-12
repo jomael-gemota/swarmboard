@@ -16,6 +16,7 @@ const CreateTaskSchema = z.object({
     .enum(["backlog", "in_progress", "in_review", "verified", "deployed"])
     .default("backlog"),
   ownerId: z.string().optional(),
+  assigneeId: z.string().nullable().optional(),
   agentType: z.enum(["cursor", "claude_code", "copilot", "windsurf", "other"]).optional(),
   position: z.number().int().optional(),
 });
@@ -25,6 +26,7 @@ const UpdateTaskSchema = z.object({
   description: z.string().max(5000).optional(),
   status: z.enum(["backlog", "in_progress", "in_review", "verified", "deployed"]).optional(),
   ownerId: z.string().nullable().optional(),
+  assigneeId: z.string().nullable().optional(),
   agentType: z.enum(["cursor", "claude_code", "copilot", "windsurf", "other"]).nullable().optional(),
   declaredFiles: z.array(z.string().max(500)).max(200).optional(),
   blocked: z.boolean().optional(),
@@ -44,7 +46,7 @@ async function assertBoardAccess(userId: string, boardId: string) {
   return member ? { board, member } : null;
 }
 
-function taskToJson(task: unknown, owner?: unknown) {
+function taskToJson(task: unknown, owner?: unknown, assignee?: unknown) {
   const t = task as Record<string, unknown>;
   return {
     ...t,
@@ -52,7 +54,9 @@ function taskToJson(task: unknown, owner?: unknown) {
     boardId: String(t.boardId),
     parentId: t.parentId ? String(t.parentId) : null,
     ownerId: t.ownerId ? String(t.ownerId) : null,
+    assigneeId: t.assigneeId ? String(t.assigneeId) : null,
     owner: owner ?? undefined,
+    assignee: assignee ?? undefined,
   };
 }
 
@@ -71,9 +75,16 @@ router.get("/", requireAuth, async (req, res) => {
     .sort({ position: 1, createdAt: 1 })
     .lean();
 
-  const userMap = await fetchAuthUsers(tasks.map((t) => t.ownerId));
+  const userMap = await fetchAuthUsers([
+    ...tasks.map((t) => t.ownerId),
+    ...tasks.map((t) => t.assigneeId),
+  ]);
 
-  res.json(tasks.map((t) => taskToJson(t, serializeUser(t.ownerId, userMap))));
+  res.json(
+    tasks.map((t) =>
+      taskToJson(t, serializeUser(t.ownerId, userMap), serializeUser(t.assigneeId, userMap))
+    )
+  );
 });
 
 // POST /boards/:boardId/tasks
@@ -107,8 +118,12 @@ router.post("/", requireAuth, async (req, res) => {
   });
 
   const obj = task.toObject();
-  const userMap = await fetchAuthUsers([obj.ownerId]);
-  const json = taskToJson(obj, serializeUser(obj.ownerId, userMap));
+  const userMap = await fetchAuthUsers([obj.ownerId, obj.assigneeId]);
+  const json = taskToJson(
+    obj,
+    serializeUser(obj.ownerId, userMap),
+    serializeUser(obj.assigneeId, userMap)
+  );
 
   emitToBoard(boardId, "task:created", json as never);
   res.status(201).json(json);
@@ -139,6 +154,23 @@ router.patch("/:taskId", requireAuth, async (req, res) => {
   if (!prevTask) {
     res.status(404).json({ error: "Task not found" });
     return;
+  }
+
+  // Reassignment guard: don't let an actively-owned task (in_progress/in_review)
+  // be reassigned to a different user while someone's agent is mid-flight — it
+  // must go back to backlog first. Prevents an assignee/owner mismatch.
+  if (parsed.data.assigneeId !== undefined) {
+    const nextAssignee = parsed.data.assigneeId ? String(parsed.data.assigneeId) : null;
+    const activelyOwned =
+      (prevTask.status === "in_progress" || prevTask.status === "in_review") &&
+      !!prevTask.ownerId;
+    if (activelyOwned && nextAssignee !== String(prevTask.ownerId)) {
+      res.status(409).json({
+        error:
+          "Can't reassign a task that's actively in progress. Move it back to backlog (or clear its owner) before reassigning.",
+      });
+      return;
+    }
   }
 
   // Clearing the blocked flag also clears the stored reason.
@@ -174,8 +206,25 @@ router.patch("/:taskId", requireAuth, async (req, res) => {
     });
   }
 
-  const userMap = await fetchAuthUsers([updated.ownerId]);
-  const json = taskToJson(updated, serializeUser(updated.ownerId, userMap));
+  const assigneeChanged =
+    parsed.data.assigneeId !== undefined &&
+    String(parsed.data.assigneeId ?? "") !== String(prevTask.assigneeId ?? "");
+  if (assigneeChanged) {
+    await ActivityLog.create({
+      taskId,
+      userId,
+      source: "user",
+      content: parsed.data.assigneeId ? "Task reassigned" : "Task unassigned",
+      metadata: { assigneeId: parsed.data.assigneeId ?? null },
+    });
+  }
+
+  const userMap = await fetchAuthUsers([updated.ownerId, updated.assigneeId]);
+  const json = taskToJson(
+    updated,
+    serializeUser(updated.ownerId, userMap),
+    serializeUser(updated.assigneeId, userMap)
+  );
   emitToBoard(boardId, "task:updated", json as never);
   res.json(json);
 

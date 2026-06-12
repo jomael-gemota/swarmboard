@@ -32,6 +32,8 @@ function taskJson(task: Record<string, unknown>) {
     id: String(task._id),
     boardId: String(task.boardId),
     parentId: task.parentId ? String(task.parentId) : null,
+    ownerId: task.ownerId ? String(task.ownerId) : null,
+    assigneeId: task.assigneeId ? String(task.assigneeId) : null,
   };
 }
 
@@ -53,13 +55,38 @@ router.post("/:taskId/claim", requireAgentToken, async (req, res) => {
 
   const { task, board } = found;
 
-  // Atomic claim guard: only refuse if the task is *actively* owned by a
-  // different user (in_progress / in_review). Backlog, unowned, or
-  // self-owned tasks remain claimable. Guarding inside the query filter
-  // prevents two agents pulling from the same backlog from stealing it.
+  // Per-board assignment policy: when on, an agent may only claim a task that is
+  // explicitly assigned to its own token user. Unassigned tasks are not
+  // claimable — a human must assign them first. Off (default) preserves the open
+  // shared-backlog behavior. Pre-checked here for clear messaging; the assignee
+  // condition is also enforced atomically in the claim filter below.
+  const requireAssignee = board.requireAssigneeToClaim ?? false;
+  if (requireAssignee) {
+    if (!task.assigneeId) {
+      res.status(403).json({
+        error:
+          "This board requires tasks to be assigned before an agent can claim them. Ask a human to assign this task to you.",
+      });
+      return;
+    }
+    if (String(task.assigneeId) !== agentToken.userId) {
+      res.status(403).json({
+        error: "This task is assigned to a different user and cannot be claimed by you.",
+      });
+      return;
+    }
+  }
+
+  // Atomic claim guard: refuse if the task is *actively* owned by a different
+  // user (in_progress / in_review), and — when the board requires it — if it is
+  // not assigned to this user. Backlog, unowned, or self-owned tasks otherwise
+  // remain claimable. Guarding inside the query filter prevents two agents
+  // pulling from the same backlog from stealing it. Claiming also stamps
+  // assigneeId so assignment stays consistent with ownership.
   const updatedTask = await Task.findOneAndUpdate(
     {
       _id: task._id,
+      ...(requireAssignee && { assigneeId: agentToken.userId }),
       $nor: [
         {
           status: { $in: ["in_progress", "in_review"] },
@@ -70,6 +97,7 @@ router.post("/:taskId/claim", requireAgentToken, async (req, res) => {
     {
       status: "in_progress",
       ownerId: agentToken.userId,
+      assigneeId: agentToken.userId,
       ...(parsed.data.agentType && { agentType: parsed.data.agentType }),
       ...(parsed.data.agentModel && { agentModel: parsed.data.agentModel }),
       ...(parsed.data.files && { declaredFiles: parsed.data.files }),
@@ -364,10 +392,14 @@ router.get("/", requireAgentToken, async (req, res) => {
     .lean();
   const boardIds = boards.map((b) => b._id);
 
+  // Surface both what the agent is actively working (owned, in_progress/in_review)
+  // and its claimable queue (backlog tasks assigned to this user).
   const tasks = await Task.find({
-    ownerId: agentToken.userId,
     boardId: { $in: boardIds },
-    status: { $in: ["in_progress", "in_review"] },
+    $or: [
+      { ownerId: agentToken.userId, status: { $in: ["in_progress", "in_review"] } },
+      { assigneeId: agentToken.userId, status: "backlog" },
+    ],
   })
     .sort({ updatedAt: -1 })
     .lean();

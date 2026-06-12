@@ -12,6 +12,7 @@ export interface ITask extends Document {
   boardId: Types.ObjectId;
   parentId?: Types.ObjectId;
   ownerId?: Types.ObjectId;
+  assigneeId?: Types.ObjectId;
   agentType?: AgentType;
   agentModel?: string;
   declaredFiles: string[];
@@ -42,6 +43,7 @@ const TaskSchema = new Schema<ITask>(
     boardId: { type: Schema.Types.ObjectId, ref: "Board", required: true },
     parentId: { type: Schema.Types.ObjectId, ref: "Task" },
     ownerId: { type: Schema.Types.ObjectId, ref: "User" },
+    assigneeId: { type: Schema.Types.ObjectId, ref: "User" },
     agentType: {
       type: String,
       enum: ["cursor", "claude_code", "copilot", "windsurf", "other"],
@@ -67,6 +69,7 @@ const TaskSchema = new Schema<ITask>(
 );
 
 TaskSchema.index({ boardId: 1, status: 1 });
+TaskSchema.index({ boardId: 1, assigneeId: 1, status: 1 });
 TaskSchema.index({ parentId: 1 });
 TaskSchema.index({ boardId: 1, changedFiles: 1 });
 TaskSchema.index({ boardId: 1, declaredFiles: 1 });

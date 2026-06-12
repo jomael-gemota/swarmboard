@@ -13,6 +13,7 @@ function taskJson(task: Record<string, unknown>) {
     boardId: String(task.boardId),
     parentId: task.parentId ? String(task.parentId) : null,
     ownerId: task.ownerId ? String(task.ownerId) : null,
+    assigneeId: task.assigneeId ? String(task.assigneeId) : null,
   };
 }
 
@@ -43,9 +44,19 @@ router.get("/:boardId/tasks", requireAgentToken, async (req, res) => {
     return;
   }
 
+  // When the board gates claims on assignment, the backlog listing only shows
+  // tasks assigned to this agent's user — i.e. the work it can actually claim.
+  // Other statuses still list everything for context.
+  const requireAssignee = board.requireAssigneeToClaim ?? false;
+  const assigneeFilter =
+    requireAssignee && parsedStatus.data === "backlog"
+      ? { assigneeId: agentToken.userId }
+      : {};
+
   const tasks = await Task.find({
     boardId: board._id,
     status: parsedStatus.data,
+    ...assigneeFilter,
   })
     .sort({ position: 1, createdAt: 1 })
     .lean();
@@ -83,6 +94,8 @@ router.post("/:boardId/tasks", requireAgentToken, async (req, res) => {
     }
   }
 
+  // Agent-created tasks default to the user behind the agent's token (the person
+  // driving the work) — including subtasks added under someone else's parent.
   const position = await nextBacklogPosition(board._id);
   const task = await Task.create({
     title: parsed.data.title,
@@ -90,6 +103,7 @@ router.post("/:boardId/tasks", requireAgentToken, async (req, res) => {
     parentId: parsed.data.parentId,
     boardId: board._id,
     status: "backlog",
+    assigneeId: agentToken.userId,
     position,
   });
 
@@ -131,12 +145,15 @@ router.post("/:boardId/plan", requireAgentToken, async (req, res) => {
   let position = await nextBacklogPosition(board._id);
   const created: Record<string, unknown>[] = [];
 
+  // Top-level plan tasks are assigned to the plan's author (the token user);
+  // subtasks are left unassigned so a human can fan them out across the team.
   for (const item of parsed.data.tasks) {
     const parent = await Task.create({
       title: item.title,
       description: item.description,
       boardId: board._id,
       status: "backlog",
+      assigneeId: agentToken.userId,
       position: position++,
     });
     await ActivityLog.create({

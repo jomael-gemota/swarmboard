@@ -13,6 +13,7 @@ const CreateBoardSchema = z.object({
   repoUrl: z.string().url().optional(),
   repoProvider: z.enum(["github", "gitlab"]).optional(),
   requirePrForReview: z.boolean().optional(),
+  requireAssigneeToClaim: z.boolean().optional(),
 });
 
 const UpdateBoardSchema = CreateBoardSchema.partial();
