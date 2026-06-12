@@ -33,7 +33,7 @@ interface AppShellProps {
 export default function AppShell({ children }: AppShellProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { orgId, boardId } = useParams();
+  const { orgId } = useParams();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [orgMenuOpen, setOrgMenuOpen] = useState(false);
