@@ -75,7 +75,7 @@ export const TaskSchema = z.object({
   parentId: z.string().nullable().optional(),
   ownerId: z.string().nullable(),
   agentType: AgentType.nullable(),
-  modulePath: z.string().nullable(),
+  agentModel: z.string().nullable().optional(),
   declaredFiles: z.array(z.string()).optional(),
   changedFiles: z.array(z.string()).optional(),
   lineRanges: z
@@ -123,7 +123,7 @@ export type AgentToken = z.infer<typeof AgentTokenSchema>;
 
 export const ClaimTaskPayload = z.object({
   agentType: AgentType.optional(),
-  modulePath: z.string().optional(),
+  agentModel: z.string().max(100).optional(),
   files: z.array(z.string().max(500)).max(200).optional(),
 });
 export type ClaimTaskPayload = z.infer<typeof ClaimTaskPayload>;
@@ -167,13 +167,13 @@ export type BlockTaskPayload = z.infer<typeof BlockTaskPayload>;
 
 export const CompleteTaskPayload = z.object({
   summary: z.string().max(2000).optional(),
+  agentModel: z.string().max(100).optional(),
 });
 export type CompleteTaskPayload = z.infer<typeof CompleteTaskPayload>;
 
 export const CreateAgentTaskPayload = z.object({
   title: z.string().min(1).max(500),
   description: z.string().max(5000).optional(),
-  modulePath: z.string().max(500).optional(),
   parentId: z.string().optional(),
 });
 export type CreateAgentTaskPayload = z.infer<typeof CreateAgentTaskPayload>;
@@ -181,13 +181,11 @@ export type CreateAgentTaskPayload = z.infer<typeof CreateAgentTaskPayload>;
 export const PlanTaskItem = z.object({
   title: z.string().min(1).max(500),
   description: z.string().max(5000).optional(),
-  modulePath: z.string().max(500).optional(),
   subtasks: z
     .array(
       z.object({
         title: z.string().min(1).max(500),
         description: z.string().max(5000).optional(),
-        modulePath: z.string().max(500).optional(),
       })
     )
     .max(50)

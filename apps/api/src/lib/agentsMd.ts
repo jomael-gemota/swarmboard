@@ -41,7 +41,10 @@ swarmboard MCP tools available — use them so the board reflects your work.
    author a plan unprompted, and don't duplicate tasks that already exist. You
    can also add a single task with \`create_task\`.
 3. Pick the task you are going to work on and call \`claim_task\` with its
-   \`task_id\`. This moves it to \`in_progress\`.
+   \`task_id\`. This moves it to \`in_progress\`. Include \`agent_type\` (your
+   IDE/tool) and \`agent_model\` (the AI model you are running as, e.g.
+   \`claude-opus-4.8\`, \`gpt-5.3-codex\`, \`gemini-2.5-pro\`) so the board
+   records what produced the work.
 
 **While working:**
 
@@ -53,9 +56,10 @@ swarmboard MCP tools available — use them so the board reflects your work.
 
 **When finished:**
 
-- Call \`complete_task\` with a short summary. This marks the task
-  *claimed complete* — a human or CI verifies it before it is truly done. Do
-  not assume your work is verified.
+- Call \`complete_task\` with a short summary (and your \`agent_model\` if you
+  did not set it at claim time). This marks the task *claimed complete* — a
+  human or CI verifies it before it is truly done. Do not assume your work is
+  verified.
 
 If you do not yet have a task ID and \`list_board_tasks\` returns nothing, ask
 the human which task to work on rather than guessing.

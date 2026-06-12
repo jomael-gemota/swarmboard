@@ -26,6 +26,7 @@ import {
   Clock,
   GitPullRequest,
   Bot,
+  Cpu,
   FolderOpen,
   Pencil,
   Save,
@@ -53,7 +54,6 @@ export default function TaskDetailDrawer({
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDesc, setEditDesc] = useState(task.description ?? "");
-  const [editModule, setEditModule] = useState(task.modulePath ?? "");
   const [editStatus, setEditStatus] = useState<TaskStatus>(task.status);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -103,7 +103,6 @@ export default function TaskDetailDrawer({
     updateMutation.mutate({
       title: editTitle,
       description: editDesc || undefined,
-      modulePath: editModule || undefined,
       status: editStatus,
     });
   }
@@ -244,29 +243,20 @@ export default function TaskDetailDrawer({
                 <Bot className="w-3.5 h-3.5 text-muted-foreground" />
                 {task.agentType ? AGENT_LABELS[task.agentType] : "—"}
               </div>
+              {task.agentModel && (
+                <div
+                  className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground font-mono min-w-0"
+                  title={`Model: ${task.agentModel}`}
+                >
+                  <Cpu className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{task.agentModel}</span>
+                </div>
+              )}
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Owner</Label>
               <div className="text-sm">{task.owner?.name ?? "Unassigned"}</div>
             </div>
-          </div>
-
-          {/* Module path */}
-          <div>
-            <Label className="text-xs text-muted-foreground mb-1.5 block">Module path</Label>
-            {editing ? (
-              <Input
-                value={editModule}
-                onChange={(e) => setEditModule(e.target.value)}
-                placeholder="e.g. packages/auth"
-                className="font-mono text-xs"
-              />
-            ) : (
-              <div className="flex items-center gap-1.5 text-sm font-mono">
-                <FolderOpen className="w-3.5 h-3.5 text-muted-foreground" />
-                {task.modulePath ?? <span className="text-muted-foreground">—</span>}
-              </div>
-            )}
           </div>
 
           {/* Files touched (declared at claim time + changed via Git) */}

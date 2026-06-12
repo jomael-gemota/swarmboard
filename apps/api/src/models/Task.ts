@@ -13,7 +13,7 @@ export interface ITask extends Document {
   parentId?: Types.ObjectId;
   ownerId?: Types.ObjectId;
   agentType?: AgentType;
-  modulePath?: string;
+  agentModel?: string;
   declaredFiles: string[];
   changedFiles: string[];
   lineRanges: { file: string; start: number; end: number }[];
@@ -44,7 +44,7 @@ const TaskSchema = new Schema<ITask>(
       type: String,
       enum: ["cursor", "claude_code", "copilot", "windsurf", "other"],
     },
-    modulePath: String,
+    agentModel: String,
     declaredFiles: { type: [String], default: [] },
     changedFiles: { type: [String], default: [] },
     lineRanges: {
@@ -64,7 +64,6 @@ const TaskSchema = new Schema<ITask>(
 
 TaskSchema.index({ boardId: 1, status: 1 });
 TaskSchema.index({ parentId: 1 });
-TaskSchema.index({ modulePath: 1 });
 TaskSchema.index({ boardId: 1, changedFiles: 1 });
 TaskSchema.index({ boardId: 1, declaredFiles: 1 });
 

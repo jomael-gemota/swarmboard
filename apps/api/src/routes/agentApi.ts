@@ -71,7 +71,7 @@ router.post("/:taskId/claim", requireAgentToken, async (req, res) => {
       status: "in_progress",
       ownerId: agentToken.userId,
       ...(parsed.data.agentType && { agentType: parsed.data.agentType }),
-      ...(parsed.data.modulePath && { modulePath: parsed.data.modulePath }),
+      ...(parsed.data.agentModel && { agentModel: parsed.data.agentModel }),
       ...(parsed.data.files && { declaredFiles: parsed.data.files }),
       isStale: false,
       claimedComplete: false,
@@ -89,7 +89,10 @@ router.post("/:taskId/claim", requireAgentToken, async (req, res) => {
     userId: agentToken.userId,
     source: "agent",
     content: "Agent claimed this task",
-    metadata: { agentType: parsed.data.agentType, modulePath: parsed.data.modulePath },
+    metadata: {
+      agentType: parsed.data.agentType,
+      agentModel: parsed.data.agentModel,
+    },
   });
 
   const boardId = String(board._id);
@@ -294,7 +297,12 @@ router.post("/:taskId/complete", requireAgentToken, async (req, res) => {
 
   const updatedTask = await Task.findByIdAndUpdate(
     found.task._id,
-    { status: "in_review", claimedComplete: true, isStale: false },
+    {
+      status: "in_review",
+      claimedComplete: true,
+      isStale: false,
+      ...(parsed.data.agentModel && { agentModel: parsed.data.agentModel }),
+    },
     { new: true }
   ).lean();
 
@@ -307,7 +315,7 @@ router.post("/:taskId/complete", requireAgentToken, async (req, res) => {
     userId: agentToken.userId,
     source: "agent",
     content,
-    metadata: { claimedComplete: true },
+    metadata: { claimedComplete: true, agentModel: parsed.data.agentModel },
   });
 
   const boardId = String(found.board._id);

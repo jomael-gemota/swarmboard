@@ -59,11 +59,13 @@ server.tool(
     agent_type: z
       .enum(["cursor", "claude_code", "copilot", "windsurf", "other"])
       .optional()
-      .describe("Which AI agent is claiming this task"),
-    module_path: z
+      .describe("Which AI tool/IDE is claiming this task"),
+    agent_model: z
       .string()
       .optional()
-      .describe("The module or package path you will be working in (e.g. packages/auth)"),
+      .describe(
+        "The underlying AI model you are running as, e.g. 'claude-opus-4.8', 'gpt-5.3-codex', 'gemini-2.5-pro'. Report your actual model identifier so the board records what produced the work."
+      ),
     files: z
       .array(z.string())
       .optional()
@@ -71,11 +73,11 @@ server.tool(
         "Specific files/paths you will be changing (e.g. ['apps/api/src/routes/tasks.ts']). Used to flag conflicts when another active task touches the same file."
       ),
   },
-  async ({ task_id, agent_type, module_path, files }) => {
+  async ({ task_id, agent_type, agent_model, files }) => {
     try {
       await callApi(`/tasks/${task_id}/claim`, "POST", {
         agentType: agent_type,
-        modulePath: module_path,
+        agentModel: agent_model,
         files,
       });
       return {
@@ -242,10 +244,16 @@ server.tool(
       .describe(
         "Optional summary of what was accomplished (e.g. 'Implemented OAuth login, added 12 tests, all passing')"
       ),
+    agent_model: z
+      .string()
+      .optional()
+      .describe(
+        "The underlying AI model that completed this task, e.g. 'claude-opus-4.8', 'gpt-5.3-codex', 'gemini-2.5-pro'. Report your actual model identifier."
+      ),
   },
-  async ({ task_id, summary }) => {
+  async ({ task_id, summary, agent_model }) => {
     try {
-      await callApi(`/tasks/${task_id}/complete`, "POST", { summary });
+      await callApi(`/tasks/${task_id}/complete`, "POST", { summary, agentModel: agent_model });
       return {
         content: [
           {
@@ -270,21 +278,16 @@ server.tool(
     board_id: z.string().describe("The swarmboard board ID (found in the repo's AGENTS.md)"),
     title: z.string().describe("Short, action-oriented task title"),
     description: z.string().optional().describe("What the task involves and any acceptance criteria"),
-    module_path: z
-      .string()
-      .optional()
-      .describe("The module or package path this task touches (e.g. packages/auth)"),
     parent_id: z
       .string()
       .optional()
       .describe("If this is a subtask, the parent task's ID (must be on the same board)"),
   },
-  async ({ board_id, title, description, module_path, parent_id }) => {
+  async ({ board_id, title, description, parent_id }) => {
     try {
       const task = (await callApi(`/boards/${board_id}/tasks`, "POST", {
         title,
         description,
-        modulePath: module_path,
         parentId: parent_id,
       })) as { id: string };
       return {
@@ -311,13 +314,11 @@ server.tool(
         z.object({
           title: z.string().describe("Short, action-oriented task title"),
           description: z.string().optional().describe("What the task involves"),
-          module_path: z.string().optional().describe("Module/package path this task touches"),
           subtasks: z
             .array(
               z.object({
                 title: z.string().describe("Subtask title"),
                 description: z.string().optional(),
-                module_path: z.string().optional(),
               })
             )
             .optional()
@@ -332,11 +333,9 @@ server.tool(
         tasks: tasks.map((t) => ({
           title: t.title,
           description: t.description,
-          modulePath: t.module_path,
           subtasks: t.subtasks?.map((s) => ({
             title: s.title,
             description: s.description,
-            modulePath: s.module_path,
           })),
         })),
       };
@@ -379,7 +378,6 @@ server.tool(
         title: string;
         status: string;
         description?: string;
-        modulePath?: string;
         parentId?: string | null;
       }>;
 
@@ -404,8 +402,8 @@ server.tool(
       type Task = (typeof list)[number];
       const line = (t: Task, indent: string) =>
         `${indent}• [${t.id}] ${t.title} — ${t.status}${
-          t.modulePath ? ` (${t.modulePath})` : ""
-        }${t.description ? `\n${indent}    ${t.description}` : ""}`;
+          t.description ? `\n${indent}    ${t.description}` : ""
+        }`;
 
       // Top level = tasks with no parent, or whose parent isn't in this list
       // (e.g. filtered out by status). Sub-tasks nest beneath their parent.
@@ -439,7 +437,7 @@ server.tool(
   async () => {
     try {
       const tasks = await callApi("/tasks", "GET");
-      const list = tasks as Array<{ id: string; title: string; status: string; modulePath?: string }>;
+      const list = tasks as Array<{ id: string; title: string; status: string }>;
 
       if (list.length === 0) {
         return {
@@ -448,10 +446,7 @@ server.tool(
       }
 
       const formatted = list
-        .map(
-          (t) =>
-            `• [${t.id}] ${t.title} — ${t.status}${t.modulePath ? ` (${t.modulePath})` : ""}`
-        )
+        .map((t) => `• [${t.id}] ${t.title} — ${t.status}`)
         .join("\n");
 
       return {
