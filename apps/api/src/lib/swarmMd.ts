@@ -50,13 +50,22 @@ swarmboard MCP tools available — use them so the board reflects your work.
    \`task_id\`. This moves it to \`in_progress\`. Include \`agent_type\` (your
    IDE/tool) and \`agent_model\` (the AI model you are running as, e.g.
    \`claude-opus-4.8\`, \`gpt-5.3-codex\`, \`gemini-2.5-pro\`) so the board
-   records what produced the work.
+   records what produced the work. Also pass \`files\` — the paths you expect to
+   touch — so the board shows your footprint and can warn about conflicts early.
 
 **While working:**
 
 - Call \`update_task\` to post meaningful progress (what you just did, findings,
   what's next).
-- Call \`complete_subtask\` for individual steps as you finish them.
+- Call \`report_changes\` whenever your set of edited files changes — pass each
+  file you've actually modified (with line ranges when you can). This populates
+  the task's "Files touched" list and powers line-level conflict detection, so
+  keep it current as your diff grows.
+- Discover the work needs to be broken down? Call \`create_task\` with
+  \`parent_id\` set to the current task's ID to add a **real** subtask under it.
+  (\`complete_subtask\` is only a lightweight checklist note in the activity feed
+  — it does not create a subtask card. Use \`create_task\` for actual subtasks.)
+- Call \`complete_subtask\` to log individual checklist steps as you finish them.
 - Call \`flag_blocker\` if you are stuck or need human input — this flags the
   task as **blocked** (it stays in its current column) and alerts a human. The
   flag clears automatically when you resume work (claim it again, report changes,
