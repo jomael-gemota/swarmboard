@@ -130,6 +130,14 @@ export default function TaskDetailDrawer({
   const formatRanges = (ranges: { start: number; end: number }[]) =>
     ranges.map((r) => (r.start === r.end ? `L${r.start}` : `L${r.start}\u2013${r.end}`)).join(", ");
 
+  const statsByFile = (task.fileStats ?? []).reduce<Record<string, { additions: number; deletions: number }>>(
+    (acc, s) => {
+      acc[s.file] = { additions: s.additions, deletions: s.deletions };
+      return acc;
+    },
+    {}
+  );
+
   return (
     <div className="fixed inset-0 z-40 flex justify-end" onClick={onClose}>
       <div
@@ -353,17 +361,27 @@ export default function TaskDetailDrawer({
                 ))}
                 {(task.changedFiles ?? []).map((f) => {
                   const ranges = rangesByFile[f];
+                  const stats = statsByFile[f];
                   return (
                     <div key={`changed-${f}`} className="flex items-center gap-1.5 text-xs font-mono min-w-0">
                       <GitPullRequest className="w-3 h-3 text-muted-foreground flex-shrink-0" />
                       <span className="truncate" title={f}>{f}</span>
+                      {stats ? (
+                        <span
+                          className="flex items-center gap-1 text-[10px] font-sans flex-shrink-0 tabular-nums"
+                          title={`${stats.additions} addition(s), ${stats.deletions} deletion(s)`}
+                        >
+                          <span className="text-emerald-400">+{stats.additions}</span>
+                          <span className="text-red-400">-{stats.deletions}</span>
+                        </span>
+                      ) : null}
                       {ranges?.length ? (
                         <span className="text-[10px] text-amber-300/80 font-sans flex-shrink-0" title="Reported changed lines">
                           {formatRanges(ranges)}
                         </span>
-                      ) : (
+                      ) : !stats ? (
                         <span className="text-[10px] text-muted-foreground/60 font-sans flex-shrink-0">changed</span>
-                      )}
+                      ) : null}
                     </div>
                   );
                 })}
