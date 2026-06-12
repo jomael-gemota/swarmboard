@@ -84,6 +84,15 @@ export const TaskSchema = z.object({
   lineRanges: z
     .array(z.object({ file: z.string(), start: z.number(), end: z.number() }))
     .optional(),
+  fileStats: z
+    .array(
+      z.object({
+        file: z.string(),
+        additions: z.number(),
+        deletions: z.number(),
+      })
+    )
+    .optional(),
   claimedComplete: z.boolean(),
   verifiedComplete: z.boolean(),
   isStale: z.boolean(),
@@ -145,6 +154,8 @@ export const ReportChangesPayload = z.object({
     .array(
       z.object({
         path: z.string().min(1).max(500),
+        additions: z.number().int().min(0).optional(),
+        deletions: z.number().int().min(0).optional(),
         ranges: z
           .array(
             z.object({
