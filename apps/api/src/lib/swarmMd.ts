@@ -5,15 +5,22 @@ interface BoardLike {
 }
 
 /**
- * Generate the swarmboard `AGENTS.md` block for a board. The result is plain
- * markdown a developer commits into their repo (root `AGENTS.md`, or appended
- * to an existing one — `CLAUDE.md` for Claude Code also works).
+ * The single line a developer adds to their existing `AGENTS.md` (or
+ * `CLAUDE.md`) so any agent is pointed at the full swarmboard instructions in
+ * `SWARM.md`. Kept short and imperative on purpose.
+ */
+export const SWARM_RULE =
+  "RULE: Before making any code changes, always read the SWARM.md file first. Do not skip this step.";
+
+/**
+ * Generate the standalone `SWARM.md` for a board. The result is plain markdown a
+ * developer commits as a new file at their repo root.
  *
  * It intentionally contains NO token: the board ID is the only identifier and
  * is safe to commit. The agent token lives solely in the developer's local MCP
  * client config (`SWARMBOARD_TOKEN`).
  */
-export function generateAgentsMarkdown({
+export function generateSwarmMarkdown({
   board,
   apiUrl,
 }: {
@@ -23,8 +30,7 @@ export function generateAgentsMarkdown({
   const boardId = String(board._id);
   const url = apiUrl.replace(/\/$/, "");
 
-  return `<!-- swarmboard:start board=${boardId} -->
-## Swarmboard task tracking
+  return `# Swarmboard task tracking
 
 This repository is tracked on the swarmboard board **${board.name}** (board ID \`${boardId}\`).
 Swarmboard is a real-time kanban board for AI-assisted development. You have
@@ -51,8 +57,10 @@ swarmboard MCP tools available — use them so the board reflects your work.
 - Call \`update_task\` to post meaningful progress (what you just did, findings,
   what's next).
 - Call \`complete_subtask\` for individual steps as you finish them.
-- Call \`flag_blocker\` if you are stuck or need human input — this moves the
-  task to \`in_review\`.
+- Call \`flag_blocker\` if you are stuck or need human input — this flags the
+  task as **blocked** (it stays in its current column) and alerts a human. The
+  flag clears automatically when you resume work (claim it again, report changes,
+  or complete it).
 
 **When finished:**
 
@@ -60,6 +68,12 @@ swarmboard MCP tools available — use them so the board reflects your work.
   did not set it at claim time). This marks the task *claimed complete* — a
   human or CI verifies it before it is truly done. Do not assume your work is
   verified.
+- **If you open a pull request**, put the task ID in the PR title or body so the
+  board can link it: \`[TASK-<task_id>]\` or \`#swb-<task_id>\` (e.g.
+  \`[TASK-abc123] fix login redirect\`). On boards that require a PR before
+  review, \`complete_task\` keeps the task *in progress* and marked
+  "done · awaiting PR" until that PR is opened — opening the PR is what moves it
+  to \`in_review\`.
 
 If you do not yet have a task ID and \`list_board_tasks\` returns nothing, ask
 the human which task to work on rather than guessing.
@@ -67,6 +81,5 @@ the human which task to work on rather than guessing.
 > Setup: this requires the \`@swarmboard/mcp-server\` MCP server configured with
 > a \`SWARMBOARD_TOKEN\` and \`SWARMBOARD_URL=${url}\`. The token is personal —
 > keep it in your local MCP config, never commit it.
-<!-- swarmboard:end -->
 `;
 }

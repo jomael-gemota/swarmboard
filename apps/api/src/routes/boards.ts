@@ -2,7 +2,7 @@ import { Router } from "express";
 import { Board, Member } from "../models/index.js";
 import { requireAuth, type AuthenticatedRequest } from "../middleware/requireAuth.js";
 import { serialize } from "../lib/serialize.js";
-import { generateAgentsMarkdown } from "../lib/agentsMd.js";
+import { generateSwarmMarkdown, SWARM_RULE } from "../lib/swarmMd.js";
 import { randomBytes } from "crypto";
 import { z } from "zod";
 
@@ -12,6 +12,7 @@ const CreateBoardSchema = z.object({
   name: z.string().min(1).max(100),
   repoUrl: z.string().url().optional(),
   repoProvider: z.enum(["github", "gitlab"]).optional(),
+  requirePrForReview: z.boolean().optional(),
 });
 
 const UpdateBoardSchema = CreateBoardSchema.partial();
@@ -83,9 +84,10 @@ router.get("/:boardId", requireAuth, async (req, res) => {
   res.json({ ...board, id: String(board._id) });
 });
 
-// GET /orgs/:orgId/boards/:boardId/agents-md
-// Returns the generated AGENTS.md block a developer commits into their repo.
-router.get("/:boardId/agents-md", requireAuth, async (req, res) => {
+// GET /orgs/:orgId/boards/:boardId/swarm-md
+// Returns the standalone SWARM.md a developer commits into their repo, plus the
+// one-line rule they add to their existing AGENTS.md to point agents at it.
+router.get("/:boardId/swarm-md", requireAuth, async (req, res) => {
   const userId = (req as AuthenticatedRequest).userId;
   const { orgId, boardId } = req.params;
 
@@ -103,8 +105,8 @@ router.get("/:boardId/agents-md", requireAuth, async (req, res) => {
   const apiUrl =
     process.env.BETTER_AUTH_URL ?? `${req.protocol}://${req.get("host") ?? "localhost:3001"}`;
 
-  const markdown = generateAgentsMarkdown({ board, apiUrl });
-  res.json({ markdown });
+  const markdown = generateSwarmMarkdown({ board, apiUrl });
+  res.json({ markdown, rule: SWARM_RULE });
 });
 
 // PATCH /orgs/:orgId/boards/:boardId
