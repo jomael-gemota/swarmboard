@@ -49,13 +49,22 @@ swarmboard MCP tools available — use them so the board reflects your work.
    out as tasks (each with optional subtasks) before you start building. Do not
    author a plan unprompted, and don't duplicate tasks that already exist. You
    can also add a single task with \`create_task\`. Name every task and subtask
-   using the **Task title format** defined below.
-3. Pick the task you are going to work on and call \`claim_task\` with its
+   using the **Task title format** defined below. Tasks you create are
+   automatically assigned to you.
+3. Pick a task **assigned to you** and call \`claim_task\` with its
    \`task_id\`. This moves it to \`in_progress\`. Include \`agent_type\` (your
    IDE/tool) and \`agent_model\` (the AI model you are running as, e.g.
    \`claude-opus-4.8\`, \`gpt-5.3-codex\`, \`gemini-2.5-pro\`) so the board
    records what produced the work. Also pass \`files\` — the paths you expect to
    touch — so the board shows your footprint and can warn about conflicts early.
+
+   **Assignment & ownership (multi-developer boards):** every task can be
+   *assigned* to a specific person. If this board enforces assignment, you may
+   only claim tasks assigned to **your** user — claiming an unassigned task, or
+   one assigned to someone else, is rejected. Never try to take a teammate's
+   task. If the work you need has no assignee (e.g. a human added it), ask the
+   human to assign it to you before claiming. \`list_my_tasks\` shows the backlog
+   tasks assigned to you that you can pick up next.
 
 **While working:**
 
