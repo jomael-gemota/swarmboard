@@ -459,26 +459,44 @@ export default function TaskDetailDrawer({
                 </div>
               </div>
               <div className="space-y-1.5">
-                {children.map((child) => (
-                  <button
-                    key={child.id}
-                    onClick={() => onTaskClick?.(child)}
-                    className="w-full flex items-center gap-2 text-left px-2.5 py-2 rounded-md bg-secondary/50 hover:bg-secondary transition-colors"
-                  >
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-semibold flex-shrink-0",
-                        STATUS_COLORS[child.status]
-                      )}
+                {children.map((child) => {
+                  // A subtask that's been completed but is held for a PR mirrors
+                  // the parent's "Done · awaiting PR" state (in_progress +
+                  // claimedComplete, no PR yet) — show that instead of the bare
+                  // "In Progress" status so it reads as done.
+                  const childAwaitingPr =
+                    child.status === "in_progress" &&
+                    child.claimedComplete &&
+                    !child.prUrl;
+                  return (
+                    <button
+                      key={child.id}
+                      onClick={() => onTaskClick?.(child)}
+                      className="w-full flex items-center gap-2 text-left px-2.5 py-2 rounded-md bg-secondary/50 hover:bg-secondary transition-colors"
                     >
-                      {STATUS_LABELS[child.status]}
-                    </span>
-                    <span className="text-sm truncate flex-1">{child.title}</span>
-                    {child.verifiedComplete && (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                    )}
-                  </button>
-                ))}
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-semibold flex-shrink-0",
+                          STATUS_COLORS[child.status]
+                        )}
+                      >
+                        {STATUS_LABELS[child.status]}
+                      </span>
+                      <span className="text-sm truncate flex-1">{child.title}</span>
+                      {childAwaitingPr && (
+                        <span
+                          className="flex items-center gap-1 text-[10px] text-amber-400 flex-shrink-0"
+                          title="Done · awaiting PR"
+                        >
+                          <GitPullRequest className="w-3 h-3" /> Done
+                        </span>
+                      )}
+                      {child.verifiedComplete && (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
