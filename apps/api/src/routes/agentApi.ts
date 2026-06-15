@@ -3,6 +3,7 @@ import { Task, Board, ActivityLog } from "../models/index.js";
 import { requireAgentToken, type AgentRequest } from "../middleware/requireAgentToken.js";
 import { emitToBoard } from "../lib/socket.js";
 import { recomputeBoardConflicts } from "../services/conflictDetection.js";
+import { cascadeToSubtasks } from "../services/subtaskCascade.js";
 import {
   ClaimTaskPayload,
   UpdateTaskPayload,
@@ -389,6 +390,29 @@ router.post("/:taskId/complete", requireAgentToken, async (req, res) => {
     id: String(log._id),
     taskId: String(task._id),
   } as never);
+
+  // Subtasks are a breakdown of the parent: completing the parent means its open
+  // subtasks are done too. Mirror the parent's resulting state onto them so they
+  // don't sit in backlog under a "done" parent — "Done · awaiting PR" when held
+  // for a PR, otherwise straight to in_review.
+  await cascadeToSubtasks({
+    parentId: String(task._id),
+    boardId,
+    updates: {
+      status: newStatus,
+      claimedComplete: true,
+      isStale: false,
+      blocked: false,
+      blockReason: null,
+    },
+    activity: {
+      source: "agent",
+      userId: agentToken.userId,
+      content: awaitingPr
+        ? "Marked done with parent task — awaiting PR before review"
+        : "Marked done with parent task",
+    },
+  });
 
   res.json({ task: updatedTask, log });
 });

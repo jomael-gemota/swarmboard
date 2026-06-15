@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Task, Board, ActivityLog } from "../models/index.js";
 import { emitToBoard } from "../lib/socket.js";
 import { recomputeBoardConflicts } from "../services/conflictDetection.js";
+import { cascadeToSubtasks } from "../services/subtaskCascade.js";
 import { createHmac, timingSafeEqual } from "crypto";
 import type { Request, Response } from "express";
 import type { ActivitySource } from "../models/ActivityLog.js";
@@ -145,6 +146,23 @@ router.post("/github/:boardId", async (req: Request, res: Response) => {
             ...updatedTask,
             id: String(updatedTask?._id),
           } as never);
+
+          // Carry the PR-driven status onto the task's subtasks so a parent and
+          // its breakdown move through review/verified together.
+          if (updates.status === "in_review" || updates.status === "verified") {
+            await cascadeToSubtasks({
+              parentId: id,
+              boardId,
+              updates,
+              activity: {
+                source: "git",
+                content:
+                  prAction === "closed" && pr?.merged
+                    ? `Moved to verified with parent — PR merged: "${prTitle}"`
+                    : `Moved to review with parent — PR opened: "${prTitle}"`,
+              },
+            });
+          }
         }
 
         await updateTaskFromGit(id, boardId, "git", content, {
@@ -283,10 +301,20 @@ router.post("/gitlab/:boardId", async (req: Request, res: Response) => {
       for (const id of ids) {
         let content = `MR ${mr.action}: "${mr.title}"`;
         if (mr.state === "merged") {
-          await Task.findByIdAndUpdate(id, {
+          const mergeUpdates = {
             status: "verified",
             verifiedComplete: true,
             prUrl: mr.url,
+          };
+          await Task.findByIdAndUpdate(id, mergeUpdates);
+          await cascadeToSubtasks({
+            parentId: id,
+            boardId,
+            updates: mergeUpdates,
+            activity: {
+              source: "git",
+              content: `Moved to verified with parent — MR merged: "${mr.title}"`,
+            },
           });
           content = `MR merged: "${mr.title}"`;
         }
