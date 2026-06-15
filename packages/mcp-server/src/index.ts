@@ -15,6 +15,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { collectGitChanges, DIFF_BASE } from "./git.js";
 
 const SWARMBOARD_URL =
   process.env.SWARMBOARD_URL ?? "https://swarmboardapi-production.up.railway.app";
@@ -125,7 +126,7 @@ server.tool(
 
 server.tool(
   "report_changes",
-  "Report the files you have changed on a task (from `git diff`/`git diff --numstat`): line ranges power line-level conflict detection, and the optional per-file additions/deletions counts are shown as `+adds / -dels` in the task's Files touched list. Call this after making edits and whenever your diff changes; each call replaces the previously reported set with your current full diff.",
+  `Report the files you changed on a task, with per-file additions/deletions (shown as \`+adds / -dels\` in the task's Files touched list) and changed line ranges (used for line-level conflict detection). You normally DON'T need to pass anything but task_id: the server runs \`git diff\` in your repo (vs \`${DIFF_BASE}\`, including untracked files) and captures the numbers automatically. Pass \`files\` only to override that (e.g. when not in a git repo). Each call replaces the previously reported set with your current full diff.`,
   {
     task_id: z.string().describe("The swarmboard task ID"),
     files: z
@@ -155,20 +156,35 @@ server.tool(
             .describe("Changed line ranges in this file. Omit for file-level only."),
         })
       )
-      .describe("The files you changed, each with its changed line ranges"),
+      .optional()
+      .describe(
+        "Override the auto-detected diff. Omit to let the server compute it from `git diff`."
+      ),
   },
   async ({ task_id, files }) => {
     try {
-      await callApi(`/tasks/${task_id}/changes`, "POST", { files });
-      const fileCount = files.length;
-      const rangeCount = files.reduce((n, f) => n + (f.ranges?.length ?? 0), 0);
+      const payloadFiles = files ?? collectGitChanges();
+      if (payloadFiles.length === 0) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `No changes detected for task ${task_id} (nothing differs from ${DIFF_BASE}). If you are not in a git repo, pass \`files\` explicitly.`,
+            },
+          ],
+        };
+      }
+      await callApi(`/tasks/${task_id}/changes`, "POST", { files: payloadFiles });
+      const fileCount = payloadFiles.length;
+      const additions = payloadFiles.reduce((n, f) => n + (f.additions ?? 0), 0);
+      const deletions = payloadFiles.reduce((n, f) => n + (f.deletions ?? 0), 0);
       return {
         content: [
           {
             type: "text",
-            text: `Reported ${fileCount} file(s)${
-              rangeCount ? ` and ${rangeCount} line range(s)` : ""
-            } for task ${task_id}.`,
+            text: `Reported ${fileCount} file(s) (+${additions} -${deletions}) for task ${task_id}${
+              files ? "" : ` from \`git diff\` vs ${DIFF_BASE}`
+            }.`,
           },
         ],
       };
@@ -265,6 +281,17 @@ server.tool(
   },
   async ({ task_id, summary, agent_model }) => {
     try {
+      // Snapshot the final diff so the task's Files touched list and +/- counts
+      // reflect the completed work. Best-effort: never block completion on git.
+      try {
+        const changes = collectGitChanges();
+        if (changes.length > 0) {
+          await callApi(`/tasks/${task_id}/changes`, "POST", { files: changes });
+        }
+      } catch {
+        // ignore — completion proceeds without a fresh diff snapshot
+      }
+
       const result = (await callApi(`/tasks/${task_id}/complete`, "POST", {
         summary,
         agentModel: agent_model,
