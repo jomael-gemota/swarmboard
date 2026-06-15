@@ -63,10 +63,22 @@ export default function BoardPage() {
   useEffect(() => {
     if (!boardId) return;
     const socket = getSocket();
-    socket.emit("board:join", boardId);
 
-    socket.on("connect", () => setConnected(true));
-    socket.on("disconnect", () => setConnected(false));
+    // Socket.io rooms are per-connection: a reconnect (network blip, API
+    // redeploy, idle/sleep) yields a new connection that is no longer in
+    // `board:${boardId}`, so server events stop arriving. Re-join on every
+    // (re)connect — not just on mount — and reconcile any events missed while
+    // disconnected by refetching the task list.
+    const joinBoard = () => {
+      socket.emit("board:join", boardId);
+      setConnected(true);
+      queryClient.invalidateQueries({ queryKey: ["tasks", boardId] });
+    };
+    const handleDisconnect = () => setConnected(false);
+
+    if (socket.connected) joinBoard();
+    socket.on("connect", joinBoard);
+    socket.on("disconnect", handleDisconnect);
 
     socket.on("task:updated", (updatedTask) => {
       queryClient.setQueryData<Task[]>(["tasks", boardId], (old) =>
@@ -97,8 +109,8 @@ export default function BoardPage() {
       socket.off("task:updated");
       socket.off("task:created");
       socket.off("task:deleted");
-      socket.off("connect");
-      socket.off("disconnect");
+      socket.off("connect", joinBoard);
+      socket.off("disconnect", handleDisconnect);
     };
   }, [boardId, queryClient]);
 
