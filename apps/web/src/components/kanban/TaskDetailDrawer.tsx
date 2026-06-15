@@ -29,7 +29,6 @@ import {
   GitPullRequest,
   Bot,
   Cpu,
-  FolderOpen,
   Pencil,
   Save,
   CornerDownRight,
@@ -347,18 +346,11 @@ export default function TaskDetailDrawer({
             )}
           </div>
 
-          {/* Files touched (declared at claim time + changed via Git) */}
-          {((task.declaredFiles?.length ?? 0) > 0 || (task.changedFiles?.length ?? 0) > 0) && (
+          {/* Files touched (changed via Git) */}
+          {(task.changedFiles?.length ?? 0) > 0 && (
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Files touched</Label>
               <div className="space-y-1">
-                {(task.declaredFiles ?? []).map((f) => (
-                  <div key={`declared-${f}`} className="flex items-center gap-1.5 text-xs font-mono min-w-0">
-                    <FolderOpen className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                    <span className="truncate" title={f}>{f}</span>
-                    <span className="text-[10px] text-muted-foreground/60 font-sans flex-shrink-0">declared</span>
-                  </div>
-                ))}
                 {(task.changedFiles ?? []).map((f) => {
                   const ranges = rangesByFile[f];
                   const stats = statsByFile[f];
